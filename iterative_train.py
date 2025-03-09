@@ -152,9 +152,9 @@ if __name__ == "__main__":
     sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
 
     # Đường dẫn tới dữ liệu train
-    train_image_dir = "/content/DRIVE/training/images"
-    train_mask_dir = "/content/DRIVE/training/1st_manual"
-    train_dataset = DRIVEDataset(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size)
+    train_image_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/training/images"
+    train_mask_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/training/1st_manual"
+    train_dataset = DRIVEDataset(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_si ze)
 
     # optimizer, loss, metric
     optim = keras.optimizers.Adam(learning_rate = LR)
