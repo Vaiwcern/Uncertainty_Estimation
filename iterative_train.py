@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # Config
     BATCH_SIZE = 5
     LR = 1e-3
-    EPOCHS = 150
+    EPOCHS = 600
     n_train = 20
     n_val = 20
 
