@@ -122,13 +122,12 @@ class SegGradCAM:
     or an individual pixel for semantic segmentation.
     """
 
-    def __init__(self, input_model, image, image_path, cls=-1, prop_to_layer='activation_9', prop_from_layer='last',
+    def __init__(self, input_model, image, cls=-1, prop_to_layer='activation_9', prop_from_layer='last',
                  roi=SuperRoI(),  # 1, #default: explain all the pixels that belong to cls
                  normalize=True, abs_w=False, posit_w=False):
 
         self.input_model = input_model
         self.image = image
-        self.image_path = image_path
         #if cls == None:
         # TODO: add option cls=-1 (predicted class) and cls=None (gt class)
         # TODO print model's confidence (probability) in prediction
@@ -152,15 +151,15 @@ class SegGradCAM:
 
         self.cam_max = None
 
-    def get_img_array(self, img_path):
-        # `img` is a PIL image of size 299x299
-        img = keras.utils.load_img(img_path)
-        # `array` is a float32 Numpy array of shape (299, 299, 3)
-        array = keras.utils.img_to_array(img)
-        # We add a dimension to transform our array into a "batch"
-        # of size (1, 299, 299, 3)
-        array = np.expand_dims(array, axis=0)
-        return array
+    # def get_img_array(self, img_path):
+    #     # `img` is a PIL image of size 299x299
+    #     img = keras.utils.load_img(img_path)
+    #     # `array` is a float32 Numpy array of shape (299, 299, 3)
+    #     array = keras.utils.img_to_array(img)
+    #     # We add a dimension to transform our array into a "batch"
+    #     # of size (1, 299, 299, 3)
+    #     array = np.expand_dims(array, axis=0)
+    #     return array
 
 
     def featureMapsGradients(self):
@@ -178,6 +177,7 @@ class SegGradCAM:
         @tf.function(input_signature=input_signature)
         def gradient_function(inputs):
             conv_output, preds = grad_model(inputs)
+            preds = tf.convert_to_tensor(preds)
             return conv_output, tf.gradients(preds[..., self.cls] * self.roi.roi, conv_output)[0]
 
         # preprocessed_input = np.expand_dims(self.image, 0)
