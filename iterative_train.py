@@ -174,5 +174,5 @@ if __name__ == "__main__":
         learning_rate=trainparam.learning_rate,
         loss_fn=total_loss, metrics=metrics,
         save_path = trainparam.save_path,
-        version=7,
+        version=1,
         step_per_epoch=trainparam.steps_per_epoch)
