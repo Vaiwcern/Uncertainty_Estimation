@@ -1,39 +1,22 @@
 import warnings
 import numpy as np
 import os
-from pathlib import Path
 import sys
-import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow.keras import layers, models
-from imageio import imread
-from sklearn.utils import shuffle
-from PIL import Image
-import cv2
 from tensorflow.keras.optimizers import Adam
 from types import SimpleNamespace
-import imageio.v2 as imageio
 import keras
-from datetime import datetime
-import math
-from tensorflow.keras.metrics import MeanIoU, Precision, Recall
 from tensorflow.keras.models import load_model
 import sys
 
 import segmentation_models as sm
-from seggradcam.dataloaders import Cityscapes, DRIVE
-from seggradcam.unet import csbd_unet, manual_unet, TrainUnet
-from seggradcam.training_write import TrainingParameters, TrainingResults
-from seggradcam.training_plots import plot_predict_and_gt, plot_loss, plot_metric
-from seggradcam.seggradcam import SegGradCAM, SuperRoI, ClassRoI, PixelRoI, BiasRoI
-from seggradcam.visualize_sgc import SegGradCAMplot
+from seggradcam.seggradcam import SegGradCAM, ClassRoI
 
 from DRIVEDataset import DRIVEDataset
 from model import unet
 
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
-import matplotlib.image as mpimg
 import numpy as np
 
 def inference_train(model, train_dataset, epochs, batch_size, learning_rate, loss_fn, metrics, save_path, version, step_per_epoch=None):

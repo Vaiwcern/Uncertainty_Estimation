@@ -1,0 +1,59 @@
+# Byte-compiled files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Distribution/Packaging
+.Python
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Virtual environment
+venv/
+ENV/
+env/
+.venv/
+
+# VS Code settings
+.vscode/
+
+# PyCharm settings
+.idea/
+
+# Test coverage reports
+.coverage
+nosetests.xml
+pytest.xml
+coverage.xml
+*.cover
+
+# MyPy type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pylint
+pylint-report.txt
+pylint-global-ast.cache
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# dotenv environment variables
+.env
+.env.*
+
+# IDE configuration files
+*.iml
