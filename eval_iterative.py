@@ -479,6 +479,11 @@ if __name__ == "__main__":
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/iterative_model/"
     )
 
+    os.makedirs(trainparam.save_path, exist_ok=True)
+    log_file = os.path.join(trainparam.save_path, "training_log.txt")
+    sys.stdout = open(log_file, "w")
+    sys.stderr = sys.stdout  
+
     # Đường dẫn tới dữ liệu của bạn
     drive_test_image_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/test/images"
     drive_test_mask_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/test/1st_manual"
