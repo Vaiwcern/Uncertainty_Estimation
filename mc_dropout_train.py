@@ -25,7 +25,7 @@ from seggradcam.seggradcam import SegGradCAM, SuperRoI, ClassRoI, PixelRoI, Bias
 from seggradcam.visualize_sgc import SegGradCAMplot
 
 from model import dropout_unet
-from DRIVEDataset import DRIVEDataset
+from CustomDataset import DRIVEDataset
 
 def train(model, train_dataset, val_dataset, epochs, learning_rate, loss_fn, metrics, save_path, version=1, step_per_epoch=None):
     """

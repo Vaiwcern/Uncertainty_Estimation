@@ -188,7 +188,7 @@ class CHASEDB1Dataset(tf.keras.utils.Sequence):
             self.image_files, self.mask_files = shuffle(self.image_files, self.mask_files)
 
 
-class STARE(tf.keras.utils.Sequence):
+class STAREDataset(tf.keras.utils.Sequence):
     def __init__(self, image_dir, mask_dir, batch_size, shuffle=True, normalize=True, augment=True):
         self.image_dir = Path(image_dir)
         self.mask_dir = Path(mask_dir)

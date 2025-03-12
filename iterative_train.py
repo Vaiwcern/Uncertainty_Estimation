@@ -12,7 +12,7 @@ import sys
 import segmentation_models as sm
 from seggradcam.seggradcam import SegGradCAM, ClassRoI
 
-from DRIVEDataset import DRIVEDataset
+from CustomDataset import DRIVEDataset
 from model import unet
 
 import tensorflow as tf
