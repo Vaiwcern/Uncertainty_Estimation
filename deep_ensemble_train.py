@@ -133,10 +133,6 @@ if __name__ == "__main__":
     binary_crossentropy_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
     metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
 
-    model = unet()
-    mdir = trainparam.save_path
-    # model.load_weights(mdir + 'epoch_40_ver6.weights.h5')
-
     NUM_MODEL = trainparam.num_model
     models_list = [unet(input_shape=(608, 576, 3), n_classes=1) for _ in range(NUM_MODEL)]
     for i in range(NUM_MODEL):
@@ -146,7 +142,7 @@ if __name__ == "__main__":
         sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
 
         # train
-        train(model,
+        train(models_list[i],
             train_dataset,
             epochs=trainparam.epochs,
             batch_size=trainparam.batch_size,
