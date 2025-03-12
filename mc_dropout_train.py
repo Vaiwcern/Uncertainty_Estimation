@@ -90,7 +90,7 @@ def train(model, train_dataset, val_dataset, epochs, learning_rate, loss_fn, met
             print(f"Validation IoU: {val_metrics}")
 
         if (epoch + 1) % 20 == 0:  # Lưu model mỗi 5 epoch
-            model.save_weights(save_path + 'epoch_' + str(epoch+1) + '_ver' + str(version) + '.weights.h5')
+            model.save_weights(os.path.join(save_path, 'epoch_' + str(epoch+1) + '_ver' + str(version) + '.weights.h5'))
             print("Model saved!")
 
 if __name__ == "__main__":
