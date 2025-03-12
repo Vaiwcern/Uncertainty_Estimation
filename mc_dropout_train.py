@@ -114,6 +114,12 @@ if __name__ == "__main__":
         input_shape=(None, None, 3),
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/mc_dropout_model"
     )
+    
+    # Log file
+    log_file = os.path.join(trainparam.save_path, "training_log.txt")
+    sys.stdout = open(log_file, "w")
+    sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
+
 
     # Đường dẫn tới dữ liệu train
     train_image_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/training/images"
