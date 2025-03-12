@@ -145,7 +145,7 @@ if __name__ == "__main__":
 
     train(model,
         train_dataset,
-        test_dataset
+        test_dataset,
         epochs=trainparam.epochs,
         learning_rate=trainparam.learning_rate,
         loss_fn=total_loss, metrics=metrics,
