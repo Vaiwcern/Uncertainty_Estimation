@@ -31,7 +31,7 @@ from model import unet
 from DRIVEDataset import DRIVEDataset
 
 
-def train(model, train_dataset, val_dataset, epochs, batch_size, learning_rate, loss_fn, metrics, save_path, version=1, step_per_epoch=None):
+def train(model, train_dataset, val_dataset, epochs, learning_rate, loss_fn, metrics, save_path, version=1, step_per_epoch=None):
     """
     Hàm huấn luyện mô hình với các tham số đầu vào.
 
@@ -115,14 +115,10 @@ if __name__ == "__main__":
         n_val=n_val,
         steps_per_epoch=(n_train + BATCH_SIZE - 1) // BATCH_SIZE,
         validation_steps=(n_val + BATCH_SIZE - 1) // BATCH_SIZE,
-        input_shape=(608, 576, 4),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/iterative_model/"
+        input_shape=(608, 576, 3),
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/deep_ensemble_model/",
+        num_model = 5
     )
-
-    # Log file
-    log_file = os.path.join(trainparam.save_path, "training_log.txt")
-    sys.stdout = open(log_file, "w")
-    sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
 
     # Đường dẫn tới dữ liệu train
     train_image_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/training/images"
@@ -131,22 +127,32 @@ if __name__ == "__main__":
 
     # optimizer, loss, metric
     optim = keras.optimizers.Adam(learning_rate = LR)
-    dice_loss = sm.losses.DiceLoss()
-    focal_loss = sm.losses.BinaryFocalLoss()
-    total_loss = focal_loss
+    # dice_loss = sm.losses.DiceLoss()
+    # focal_loss = sm.losses.BinaryFocalLoss()
+    # total_loss = focal_loss
+    binary_crossentropy_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
     metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
 
     model = unet()
     mdir = trainparam.save_path
     # model.load_weights(mdir + 'epoch_40_ver6.weights.h5')
 
-    # train
-    inference_train(model,
-        train_dataset,
-        epochs=trainparam.epochs,
-        batch_size=trainparam.batch_size,
-        learning_rate=trainparam.learning_rate,
-        loss_fn=total_loss, metrics=metrics,
-        save_path = trainparam.save_path,
-        version=1,
-        step_per_epoch=trainparam.steps_per_epoch)
+    NUM_MODEL = trainparam.num_model
+    models_list = [unet(input_shape=(608, 576, 3), n_classes=1) for _ in range(NUM_MODEL)]
+    for i in range(NUM_MODEL):
+        # Log file
+        log_file = os.path.join(trainparam.save_path, "model_" + str(i) , "training_log.txt")
+        sys.stdout = open(log_file, "w")
+        sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
+
+        # train
+        train(model,
+            train_dataset,
+            epochs=trainparam.epochs,
+            batch_size=trainparam.batch_size,
+            learning_rate=trainparam.learning_rate,
+            loss_fn=binary_crossentropy_loss, 
+            metrics=metrics,
+            save_path = os.path.join(trainparam.save_path, "model_" + str(i)),
+            version=1,
+            step_per_epoch=trainparam.steps_per_epoch)
