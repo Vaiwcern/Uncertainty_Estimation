@@ -125,6 +125,12 @@ if __name__ == "__main__":
     train_mask_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/DRIVE/training/1st_manual"
     train_dataset = DRIVEDataset(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size)
 
+    # Đường dẫn tới dữ liệu test
+    test_image_dir = "/content/DRIVE/test/images"
+    test_mask_dir = "/content/DRIVE/test/1st_manual"
+
+    test_dataset = DRIVEDataset(image_dir=test_image_dir, mask_dir=test_mask_dir, batch_size=trainparam.batch_size, augment=False)
+
     # optimizer, loss, metric
     optim = keras.optimizers.Adam(learning_rate = LR)
     # dice_loss = sm.losses.DiceLoss()
@@ -147,6 +153,7 @@ if __name__ == "__main__":
         # train
         train(models_list[i],
             train_dataset,
+            test_dataset,
             epochs=trainparam.epochs,
             learning_rate=trainparam.learning_rate,
             loss_fn=binary_crossentropy_loss, 
