@@ -480,7 +480,7 @@ if __name__ == "__main__":
     )
 
     os.makedirs(trainparam.save_path, exist_ok=True)
-    log_file = os.path.join(trainparam.save_path, "training_log.txt")
+    log_file = os.path.join(trainparam.save_path, "eval_log.txt")
     sys.stdout = open(log_file, "w")
     sys.stderr = sys.stdout  
 
