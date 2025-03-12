@@ -134,9 +134,9 @@ if __name__ == "__main__":
     # optimizer, loss, metric
     optim = keras.optimizers.Adam(learning_rate = LR)
     # dice_loss = sm.losses.DiceLoss()
-    # focal_loss = sm.losses.BinaryFocalLoss()
-    # total_loss = focal_loss
-    binary_crossentropy_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
+    focal_loss = sm.losses.BinaryFocalLoss()
+    total_loss = focal_loss
+    # binary_crossentropy_loss = tf.keras.losses.BinaryCrossentropy(from_logits=False)
     metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
 
     NUM_MODEL = trainparam.num_model
@@ -156,7 +156,7 @@ if __name__ == "__main__":
             test_dataset,
             epochs=trainparam.epochs,
             learning_rate=trainparam.learning_rate,
-            loss_fn=binary_crossentropy_loss, 
+            loss_fn=total_loss, 
             metrics=metrics,
             save_path = model_path,
             version=1,
