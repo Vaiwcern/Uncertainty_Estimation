@@ -94,7 +94,7 @@ def train(model, train_dataset, val_dataset, epochs, learning_rate, loss_fn, met
             print(f"Validation IoU: {val_metrics}")
 
         if (epoch + 1) % 20 == 0:  # Lưu model mỗi 5 epoch
-            model.save_weights(save_path + 'epoch_' + str(epoch+1) + '_ver' + str(version) + '.weights.h5')
+            model.save_weights(os.path.join(save_path, 'epoch_' + str(epoch+1) + '_ver' + str(version) + '.weights.h5'))
             print("Checkpoint saved!")
 
 if __name__ == "__main__":
@@ -136,8 +136,11 @@ if __name__ == "__main__":
     NUM_MODEL = trainparam.num_model
     models_list = [unet(input_shape=(608, 576, 3), n_classes=1) for _ in range(NUM_MODEL)]
     for i in range(NUM_MODEL):
+        model_path = os.path.join(trainparam.save_path, "model_" + str(i))
+        os.makedirs(model_path, exist_ok=True)
+
         # Log file
-        log_file = os.path.join(trainparam.save_path, "model_" + str(i) , "training_log.txt")
+        log_file = os.path.join(model_path, "training_log.txt")
         sys.stdout = open(log_file, "w")
         sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
 
@@ -149,6 +152,6 @@ if __name__ == "__main__":
             learning_rate=trainparam.learning_rate,
             loss_fn=binary_crossentropy_loss, 
             metrics=metrics,
-            save_path = os.path.join(trainparam.save_path, "model_" + str(i)),
+            save_path = model_path,
             version=1,
             step_per_epoch=trainparam.steps_per_epoch)
