@@ -148,7 +148,6 @@ if __name__ == "__main__":
         train(models_list[i],
             train_dataset,
             epochs=trainparam.epochs,
-            batch_size=trainparam.batch_size,
             learning_rate=trainparam.learning_rate,
             loss_fn=binary_crossentropy_loss, 
             metrics=metrics,
