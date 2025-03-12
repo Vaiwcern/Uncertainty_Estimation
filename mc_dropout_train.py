@@ -115,6 +115,7 @@ if __name__ == "__main__":
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/mc_dropout_model"
     )
     
+    os.makedirs(trainparam.save_path, exist_ok=True)
     # Log file
     log_file = os.path.join(trainparam.save_path, "training_log.txt")
     sys.stdout = open(log_file, "w")
