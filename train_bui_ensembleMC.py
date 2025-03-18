@@ -30,7 +30,6 @@ from seggradcam.visualize_sgc import SegGradCAMplot
 
 from MyDS import MyDS
 from model_drop import unet
-# from model import unet
 
 import tensorflow as tf
 from tensorflow.keras.optimizers import Adam
@@ -100,7 +99,7 @@ def train(model, train_dataset, val_dataset, epochs, batch_size, learning_rate, 
             print(f"Validation IoU: {val_metrics}")
 
         if (epoch + 1) % 50 == 0:  # Lưu model mỗi 5 epoch
-            model.save_weights(save_path + 'epoch_' + str(epoch+1) + '_ver4.weights.h5')
+            model.save_weights(save_path + '_epoch_' + str(epoch+1) + '_ver4.weights.h5')
             print("Model saved!")
 
 if __name__ == "__main__":
@@ -114,60 +113,72 @@ if __name__ == "__main__":
     n_train = 582
     n_val = 65
 
-    trainparam = SimpleNamespace(
-        dataset_name="DRIVE",
-        learning_rate=LR,
-        n_classes=1,
-        epochs=EPOCHS,
-        batch_size=BATCH_SIZE,
-        n_train=n_train,
-        n_val=n_val,
-        # steps_per_epoch=(n_train + BATCH_SIZE - 1) // BATCH_SIZE,
-        # validation_steps=(n_val + BATCH_SIZE - 1) // BATCH_SIZE,
-        steps_per_epoch=n_train // BATCH_SIZE,
-        validation_steps=n_val // BATCH_SIZE,
-        input_shape=(None, None, 3),
-        save_path=f"{BASE_ROOT}/model_BUI_drop/"
-    )
-    mdir = trainparam.save_path
+    mdir = f"{BASE_ROOT}/model_BUI_ensemble/"
+
     if not os.path.exists(mdir):
         os.makedirs(mdir)
 
-    # Log file
-    log_file = os.path.join(trainparam.save_path, "training_log.txt")
+    log_file = os.path.join(mdir, "training_log.txt")
     sys.stdout = open(log_file, "w")
     sys.stderr = sys.stdout  # Ghi cả lỗi vào file log
 
-    # Đường dẫn tới dữ liệu train
-    train_image_dir = f"{BASE_DS}/train/image"
-    train_mask_dir = f"{BASE_DS}/train/mask"
-    train_dataset = MyDS(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size, augment=False)
-    test_image_dir = f"{BASE_DS}/test/image"
-    test_mask_dir = f"{BASE_DS}/test/mask"
-    test_dataset = MyDS(image_dir=test_image_dir, mask_dir=test_mask_dir, batch_size=trainparam.batch_size, augment=False)
 
-    # optimizer, loss, metric
-    optim = keras.optimizers.Adam(learning_rate = LR)
-    dice_loss = sm.losses.DiceLoss()
-    focal_loss = sm.losses.BinaryFocalLoss()
-
-    # total_loss = focal_loss
-    total_loss = tf.keras.losses.BinaryCrossentropy()
-    metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
-
-    model = unet(input_shape=(128, 128, 3), dropout_rate=0.5)
+    NUM_MODELS = 5
+    for i in range(NUM_MODELS):
+        model_folder = f"{mdir}model_{i}/"
+        if not os.path.exists(model_folder):
+            os.makedirs(model_folder)
 
 
-    # model.load_weights(mdir + 'epoch_50_ver4.weights.h5')
+        trainparam = SimpleNamespace(
+            dataset_name="DRIVE",
+            learning_rate=LR,
+            n_classes=1,
+            epochs=EPOCHS,
+            batch_size=BATCH_SIZE,
+            n_train=n_train,
+            n_val=n_val,
+            # steps_per_epoch=(n_train + BATCH_SIZE - 1) // BATCH_SIZE,
+            # validation_steps=(n_val + BATCH_SIZE - 1) // BATCH_SIZE,
+            steps_per_epoch=n_train // BATCH_SIZE,
+            validation_steps=n_val // BATCH_SIZE,
+            input_shape=(None, None, 3),
+            save_path=model_folder
+        )
 
-    # train
-    train(model,
-        train_dataset,
-        test_dataset,
-        epochs=trainparam.epochs,
-        batch_size=trainparam.batch_size,
-        learning_rate=trainparam.learning_rate,
-        loss_fn=total_loss, metrics=metrics,
-        save_path=trainparam.save_path,
-        # version=8,
-        step_per_epoch=trainparam.steps_per_epoch)
+        # Đường dẫn tới dữ liệu train
+        train_image_dir = f"{BASE_DS}/train/image"
+        train_mask_dir = f"{BASE_DS}/train/mask"
+        train_dataset = MyDS(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size, augment=False)
+        test_image_dir = f"{BASE_DS}/test/image"
+        test_mask_dir = f"{BASE_DS}/test/mask"
+        test_dataset = MyDS(image_dir=test_image_dir, mask_dir=test_mask_dir, batch_size=trainparam.batch_size, augment=False)
+
+        # optimizer, loss, metric
+        optim = keras.optimizers.Adam(learning_rate = LR)
+        dice_loss = sm.losses.DiceLoss()
+        focal_loss = sm.losses.BinaryFocalLoss()
+        # total_loss = focal_loss
+
+        total_loss = tf.keras.losses.BinaryCrossentropy()
+        metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
+
+
+        # model.load_weights(mdir + 'epoch_40_ver6.weights.h5')
+
+        print(f"\n\n===== TRAINING MODEL {i + 1}/{NUM_MODELS} (Dropout=0) =====\n")
+
+        model_i = unet(input_shape=(128, 128, 3), dropout_rate=0.5)
+
+
+        # train
+        train(model_i,
+            train_dataset,
+            test_dataset,
+            epochs=trainparam.epochs,
+            batch_size=trainparam.batch_size,
+            learning_rate=trainparam.learning_rate,
+            loss_fn=total_loss, metrics=metrics,
+            save_path=trainparam.save_path,
+            # version=8,
+            step_per_epoch=trainparam.steps_per_epoch)

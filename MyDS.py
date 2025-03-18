@@ -4,12 +4,13 @@ from pathlib import Path
 from skimage.io import imread
 from sklearn.utils import shuffle
 import cv2
+import imageio.v2 as imageio
 
 def my_resize(path, size=128, mask=False):
     image = cv2.imread(path)
-    image = cv2.resize(image, (size,size))
-    if mask==True:
-      image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)   # shape: (size,size,3) -> (size,size,1)
+    image = cv2.resize(image, (size, size))
+    if mask == True:
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)  # shape: (size,size,3) -> (size,size,1)
     return image
 
 class MyDS(tf.keras.utils.Sequence):

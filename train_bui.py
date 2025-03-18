@@ -122,7 +122,7 @@ def inference_train(model, train_dataset, val_dataset, epochs, batch_size, learn
             # In giá trị loss sau mỗi step
             print(f"Step {step}: Loss = {total_loss.numpy()}")
 
-        if (epoch + 1) % 20 == 0:
+        if (epoch + 1) % 10 == 0:
             model.save_weights(save_path + 'epoch_' + str(epoch + 1) + '_ver' + str(version)+ '.weights.h5')
             print("Checkpoint saved!")
 
@@ -134,7 +134,7 @@ if __name__ == "__main__":
     # Config
     BATCH_SIZE = 32
     LR = 1e-3
-    EPOCHS = 60
+    EPOCHS = 100
     n_train = 582
     n_val = 65
 
@@ -148,8 +148,8 @@ if __name__ == "__main__":
         n_val=n_val,
         # steps_per_epoch=(n_train + BATCH_SIZE - 1) // BATCH_SIZE,
         # validation_steps=(n_val + BATCH_SIZE - 1) // BATCH_SIZE,
-        steps_per_epoch=582 // 65,
-        validation_steps=65 // 65,
+        steps_per_epoch=n_train // BATCH_SIZE,
+        validation_steps=n_val // BATCH_SIZE,
         input_shape=(128, 128, 4),
         save_path=f"{BASE_ROOT}/iter_model_BUI/"
     )
@@ -172,6 +172,8 @@ if __name__ == "__main__":
     dice_loss = sm.losses.DiceLoss()
     focal_loss = sm.losses.BinaryFocalLoss()
     total_loss = focal_loss
+
+    total_loss = tf.keras.losses.BinaryCrossentropy()
     metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
 
     model = unet(input_shape=(128, 128, 4), n_classes=1)
@@ -179,7 +181,7 @@ if __name__ == "__main__":
     if not os.path.exists(mdir):
         os.makedirs(mdir)
 
-    model.load_weights(mdir + 'epoch_50_ver8.weights.h5')
+    # model.load_weights(mdir + 'epoch_50_ver8.weights.h5')
 
     # train
     inference_train(model,

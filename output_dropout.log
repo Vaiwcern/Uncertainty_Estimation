@@ -1,0 +1,15 @@
+nohup: ignoring input
+2025-03-12 04:34:12.114186: E external/local_xla/xla/stream_executor/cuda/cuda_fft.cc:477] Unable to register cuFFT factory: Attempting to register factory for plugin cuFFT when one has already been registered
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+E0000 00:00:1741754052.134403 1068785 cuda_dnn.cc:8310] Unable to register cuDNN factory: Attempting to register factory for plugin cuDNN when one has already been registered
+E0000 00:00:1741754052.140674 1068785 cuda_blas.cc:1418] Unable to register cuBLAS factory: Attempting to register factory for plugin cuBLAS when one has already been registered
+2025-03-12 04:34:12.162209: I tensorflow/core/platform/cpu_feature_guard.cc:210] This TensorFlow binary is optimized to use available CPU instructions in performance-critical operations.
+To enable the following instructions: AVX2 FMA, in other operations, rebuild TensorFlow with the appropriate compiler flags.
+I0000 00:00:1741754055.105063 1068785 gpu_device.cc:2022] Created device /job:localhost/replica:0/task:0/device:GPU:0 with 79076 MB memory:  -> device: 0, name: NVIDIA A100-SXM4-80GB, pci bus id: 0000:90:00.0, compute capability: 8.0
+I0000 00:00:1741754057.477747 1068785 cuda_dnn.cc:529] Loaded cuDNN version 90501
+WARNING: All log messages before absl::InitializeLog() is called are written to STDERR
+I0000 00:00:1741754081.875295 1070222 service.cc:148] XLA service 0x7f5b9000f8d0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+I0000 00:00:1741754081.875384 1070222 service.cc:156]   StreamExecutor device (0): NVIDIA A100-SXM4-80GB, Compute Capability 8.0
+2025-03-12 04:34:41.942212: I tensorflow/compiler/mlir/tensorflow/utils/dump_mlir_util.cc:268] disabling MLIR crash reproducer, set env var `MLIR_CRASH_REPRODUCER_DIRECTORY` to enable.
+I0000 00:00:1741754088.649852 1070222 device_compiler.h:188] Compiled cluster using XLA!  This line is logged at most once for the lifetime of the process.
+Segmentation Models: using `keras` framework.

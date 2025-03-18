@@ -109,7 +109,7 @@ if __name__ == "__main__":
     # Config
     BATCH_SIZE = 32
     LR = 1e-3
-    EPOCHS = 50
+    EPOCHS = 100
     n_train = 582
     n_val = 65
 
@@ -140,8 +140,8 @@ if __name__ == "__main__":
             n_val=n_val,
             # steps_per_epoch=(n_train + BATCH_SIZE - 1) // BATCH_SIZE,
             # validation_steps=(n_val + BATCH_SIZE - 1) // BATCH_SIZE,
-            steps_per_epoch=582 // 65,
-            validation_steps=65 // 65,
+            steps_per_epoch=n_train // BATCH_SIZE,
+            validation_steps=n_val // BATCH_SIZE,
             input_shape=(None, None, 3),
             save_path=model_folder
         )
@@ -149,16 +149,18 @@ if __name__ == "__main__":
         # Đường dẫn tới dữ liệu train
         train_image_dir = f"{BASE_DS}/train/image"
         train_mask_dir = f"{BASE_DS}/train/mask"
-        train_dataset = MyDS(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size)
+        train_dataset = MyDS(image_dir=train_image_dir, mask_dir=train_mask_dir, batch_size=trainparam.batch_size, augment=False)
         test_image_dir = f"{BASE_DS}/test/image"
         test_mask_dir = f"{BASE_DS}/test/mask"
-        test_dataset = MyDS(image_dir=test_image_dir, mask_dir=test_mask_dir, batch_size=trainparam.batch_size)
+        test_dataset = MyDS(image_dir=test_image_dir, mask_dir=test_mask_dir, batch_size=trainparam.batch_size, augment=False)
 
         # optimizer, loss, metric
         optim = keras.optimizers.Adam(learning_rate = LR)
         dice_loss = sm.losses.DiceLoss()
         focal_loss = sm.losses.BinaryFocalLoss()
-        total_loss = focal_loss
+        # total_loss = focal_loss
+
+        total_loss = tf.keras.losses.BinaryCrossentropy()
         metrics = [sm.metrics.IOUScore(threshold=0.5), sm.metrics.FScore(threshold=0.5)]
 
 
