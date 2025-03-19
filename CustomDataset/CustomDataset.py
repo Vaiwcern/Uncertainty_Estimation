@@ -4,13 +4,7 @@ from pathlib import Path
 import imageio.v2 as imageio
 import cv2
 from sklearn.utils import shuffle
-
-import tensorflow as tf
-import numpy as np
-from pathlib import Path
 from skimage.io import imread
-from sklearn.utils import shuffle
-import cv2
 
 class DRIVEDataset(tf.keras.utils.Sequence):
     def __init__(self, image_dir, mask_dir, batch_size, shuffle=True, normalize=True, augment=True):
