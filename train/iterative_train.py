@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 2
+    BATCH_SIZE = 4
     LR = 1e-3
     EPOCHS = 10
 
@@ -59,7 +59,7 @@ if __name__ == "__main__":
     )
 
     train_dataset = train_dataset_wrapper.dataset
-    
+
     # Create a MirroredStrategy.
     strategy = tf.distribute.MirroredStrategy()
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
