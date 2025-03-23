@@ -49,7 +49,6 @@
 
 #     inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss())
 
-
 import tensorflow as tf
 import os
 
@@ -64,12 +63,21 @@ if gpu_available:
 else:
     print("TensorFlow is using CPU.")
 
-# Kiểm tra phiên bản CUDA và cuDNN
+# Kiểm tra phiên bản CUDA
 try:
     cuda_version = os.popen("nvcc --version").read()
-    print(f"CUDA Version: {cuda_version.split('release')[1].split(',')[0].strip()}")
-
-    cudnn_version = tf.sysconfig.get_libcudnn_version()
-    print(f"cuDNN Version: {cudnn_version}")
+    cuda_version = cuda_version.split("release")[1].split(',')[0].strip() if 'release' in cuda_version else 'CUDA not installed'
+    print(f"CUDA Version: {cuda_version}")
 except Exception as e:
-    print(f"Error in retrieving CUDA or cuDNN version: {e}")
+    print(f"Error in retrieving CUDA version: {e}")
+
+# Kiểm tra phiên bản cuDNN (sử dụng file cudnn.h)
+try:
+    cudnn_version = os.popen('cat /usr/include/cudnn.h | grep CUDNN_MAJOR -A 2').read()
+    if cudnn_version:
+        cudnn_version = cudnn_version.split('\n')[0].split(' ')[-1]
+        print(f"cuDNN Version: {cudnn_version}")
+    else:
+        print("cuDNN not installed or not found.")
+except Exception as e:
+    print(f"Error in retrieving cuDNN version: {e}")
