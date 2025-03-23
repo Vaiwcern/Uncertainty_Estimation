@@ -5,7 +5,7 @@ import numpy as np
 def focal_loss(gamma=2.0, alpha=0.25):
     def loss(y_true, y_pred):
         epsilon = K.epsilon()  # Tránh log(0)
-        y_pred = K.clip(y_pred, epsilon, 1.0 - epsilon)  # Giữ giá trị trong (0,1)
+        y_pred = K.clip_by_value(y_pred, epsilon, 1.0 - epsilon)  # Giữ giá trị trong (0,1)
         
         pt = y_true * y_pred + (1 - y_true) * (1 - y_pred)  # Nếu đã sigmoid, chỉ cần tính xác suất đúng
         focal_weight = alpha * K.pow((1 - pt), gamma)
