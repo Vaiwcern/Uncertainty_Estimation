@@ -70,9 +70,9 @@ if __name__ == "__main__":
     print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
 
-    # model.fit(
-    #     train_dataset,
-    #     epochs=trainparam.epochs,
-    #     steps_per_epoch=train_dataset_wrapper.steps_per_epoch
-    # )
+    model.fit(
+        train_dataset,
+        epochs=trainparam.epochs,
+        steps_per_epoch=train_dataset_wrapper.steps_per_epoch
+    )
 
