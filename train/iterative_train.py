@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 4
+    BATCH_SIZE = 3
     LR = 1e-3
     EPOCHS = 10
 
