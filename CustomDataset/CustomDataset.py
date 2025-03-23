@@ -446,14 +446,6 @@ class DRIVEDatasetTF:
         dataset = dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
         return dataset
 
-
-import tensorflow as tf
-import numpy as np
-from pathlib import Path
-import imageio.v2 as imageio
-import cv2
-from sklearn.utils import shuffle
-
 class RTDatasetTF:
     def __init__(self, dataset_dir, batch_size=8, normalize=True, train=True, thin_label=False):
         self.image_dir = Path(dataset_dir) / ("imagery" if train else "imagery_test")
@@ -472,6 +464,8 @@ class RTDatasetTF:
         if self.shuffle_data:
             self.image_files, self.mask_files = shuffle(self.image_files, self.mask_files)
 
+        # Tính steps_per_epoch và dataset
+        self.steps_per_epoch = len(self.image_files) // self.batch_size
         self.dataset = self.build_dataset()
 
     def load_pair(self, image_path, mask_path):
@@ -489,11 +483,9 @@ class RTDatasetTF:
         if np.random.rand() < 0.5:
             image = np.fliplr(image)
             mask = np.fliplr(mask)
-
         if np.random.rand() < 0.5:
             image = np.flipud(image)
             mask = np.flipud(mask)
-
         if np.random.rand() < 0.5:
             angle = np.random.uniform(-180, 180)
             h, w = image.shape[:2]
@@ -502,7 +494,6 @@ class RTDatasetTF:
             image = cv2.warpAffine(image, matrix, (w, h), flags=cv2.INTER_LINEAR)
             mask = cv2.warpAffine(mask.squeeze(), matrix, (w, h), flags=cv2.INTER_NEAREST)
             mask = np.expand_dims(mask, axis=-1)
-
         return image.astype(np.float32), mask.astype(np.float32)
 
     def tf_load_pair(self, image_path, mask_path):
@@ -530,5 +521,6 @@ class RTDatasetTF:
         if self.shuffle_data:
             dataset = dataset.shuffle(buffer_size=100, reshuffle_each_iteration=True)
 
-        dataset = dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        # ✅ repeat để tránh OutOfRange
+        dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
         return dataset

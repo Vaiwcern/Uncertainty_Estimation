@@ -24,7 +24,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 4
+    BATCH_SIZE = 4  
     LR = 1e-3
     EPOCHS = 10
 
@@ -38,27 +38,6 @@ if __name__ == "__main__":
         input_shape=(1024, 1024, 4),
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model"
     )
-
-    # data_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop"
-    # train_dataset = RTDataset(data_dir, trainparam.batch_size, normalize=True, train=True, thin_label=False)
-
-    # model = standard_unet(input_size=(None, None, 4), dropout_rate=0.0)
-
-    # optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-
-    # inference_train(model, train_dataset, epochs=trainparam.epochs, optimizer=optim, loss_fn=focal_loss(), save_path=trainparam.save_path)
-
-    data_dir = "/content/RTdata_Crop"
-
-    train_dataset_wrapper = RTDatasetTF(
-        dataset_dir=data_dir,
-        batch_size=trainparam.batch_size,
-        normalize=True,
-        train=True,
-        thin_label=False
-    )
-
-    train_dataset = train_dataset_wrapper.dataset
 
     # Create a MirroredStrategy.
     strategy = tf.distribute.MirroredStrategy()
@@ -77,5 +56,19 @@ if __name__ == "__main__":
             ]
         )
 
-    model.fit(train_dataset, epochs=trainparam.epochs)
+    train_dataset_wrapper = RTDatasetTF(
+        dataset_dir="/content/RTdata_Crop",
+        batch_size=trainparam.batch_size,
+        normalize=True,
+        train=True,
+        thin_label=False
+    )
+
+    train_dataset = train_dataset_wrapper.dataset
+
+    model.fit(
+        train_dataset,
+        epochs=trainparam.epochs,
+        steps_per_epoch=train_dataset_wrapper.steps_per_epoch
+    )
 
