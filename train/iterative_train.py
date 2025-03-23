@@ -57,7 +57,7 @@ if __name__ == "__main__":
         )
 
     train_dataset_wrapper = RTDatasetTF(
-        dataset_dir="/content/RTdata_Crop",
+        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
         batch_size=trainparam.batch_size,
         normalize=True,
         train=True,
