@@ -98,6 +98,8 @@ def inference_train(model, train_dataset, epochs, optimizer, loss_fn, save_path)
         for batch in range(len(train_dataset)): 
             images, labels = train_dataset[batch]
 
+            print("HEHE")
+
             # Khởi tạo channel thứ 4 với toàn số 0 cho loop đầu tiên
             zero_channel = np.zeros((images.shape[0], images.shape[1], images.shape[2], 1))
 
