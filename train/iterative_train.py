@@ -69,6 +69,9 @@ if __name__ == "__main__":
             ]
         )
 
+    dummy_x = tf.random.normal((1, 1024, 1024, 4))
+    _ = model(dummy_x)
+
     model.fit(
         train_dataset,
         epochs=trainparam.epochs,
