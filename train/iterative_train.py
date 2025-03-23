@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 2  
+    BATCH_SIZE = 4
     LR = 1e-3
     EPOCHS = 10
 
@@ -46,4 +46,3 @@ if __name__ == "__main__":
     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
 
     inference_train(model, train_dataset, epochs=trainparam.epochs, optimizer=optim, loss_fn=focal_loss(), save_path=trainparam.save_path)
-    
