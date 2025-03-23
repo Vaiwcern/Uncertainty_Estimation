@@ -42,6 +42,9 @@ class RTDataset(tf.keras.utils.Sequence):
         if self.augment:
             images, masks = self.apply_augmentation(images, masks)
 
+        images = tf.cast(images, tf.float32) 
+        masks = tf.cast(masks, tf.float32)    
+
         return images, masks
 
     def load_image(self, filepath):
