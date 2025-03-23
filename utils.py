@@ -55,6 +55,7 @@ def inference_train(model, train_dataset, epochs, optimizer, loss_fn):
             with tf.GradientTape() as tape:
                 for _ in range(3):
                     # Tạo input với channel thứ 4
+                    print("HEHE")
                     images_4ch = np.concatenate([images, zero_channel], axis=-1)
 
                     print(images_4ch.shape)
