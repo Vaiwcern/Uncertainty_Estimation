@@ -39,23 +39,6 @@ if __name__ == "__main__":
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model"
     )
 
-    # Create a MirroredStrategy.
-    strategy = tf.distribute.MirroredStrategy()
-    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
-
-    optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-    with strategy.scope():
-        model = StandardUNet(input_channels=4, dropout_rate=0.0)
-        model.compile(
-            optimizer=optim,
-            loss=focal_loss(),
-            metrics=[
-                'accuracy',
-                IoUMetric(),
-                F1ScoreMetric()
-            ]
-        )
-
     train_dataset_wrapper = RTDatasetTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
         batch_size=trainparam.batch_size,
@@ -69,6 +52,22 @@ if __name__ == "__main__":
     print("Total images:", len(train_dataset_wrapper.image_files))
     print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
+    # Create a MirroredStrategy.
+    strategy = tf.distribute.MirroredStrategy()
+    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+
+    with strategy.scope():
+        model = StandardUNet(input_channels=4, dropout_rate=0.0)
+        optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
+        model.compile(
+            optimizer=optim,
+            loss=focal_loss(),
+            metrics=[
+                'accuracy',
+                IoUMetric(),
+                F1ScoreMetric()
+            ]
+        )
 
     model.fit(
         train_dataset,
