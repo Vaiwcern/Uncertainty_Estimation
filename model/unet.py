@@ -1,101 +1,130 @@
-from tensorflow.keras import layers, models
+import tensorflow as tf
+from tensorflow.keras import layers
 
-def standard_unet(input_size=(None, None, 4), dropout_rate=0.5):
-    inputs = layers.Input(input_size)
+class StandardUNet(tf.keras.Model):
+    def __init__(self, input_channels=4, dropout_rate=0.5):
+        super(StandardUNet, self).__init__()
+        self.dropout_rate = dropout_rate
 
-    # Downsampling path (Encoder)
-    conv1 = layers.Conv2D(64, (3, 3), padding='same')(inputs)
-    conv1 = layers.BatchNormalization()(conv1)
-    conv1 = layers.Activation('relu')(conv1)
-    conv1 = layers.Conv2D(64, (3, 3), padding='same')(conv1)
-    conv1 = layers.BatchNormalization()(conv1)
-    conv1 = layers.Activation('relu')(conv1)
-    conv1 = layers.Dropout(dropout_rate)(conv1)
-    pool1 = layers.MaxPooling2D((2, 2))(conv1)
+        # Encoder
+        self.conv1 = self._conv_block(64)
+        self.pool1 = layers.MaxPooling2D((2, 2))
 
-    conv2 = layers.Conv2D(128, (3, 3), padding='same')(pool1)
-    conv2 = layers.BatchNormalization()(conv2)
-    conv2 = layers.Activation('relu')(conv2)
-    conv2 = layers.Conv2D(128, (3, 3), padding='same')(conv2)
-    conv2 = layers.BatchNormalization()(conv2)
-    conv2 = layers.Activation('relu')(conv2)
-    conv2 = layers.Dropout(dropout_rate)(conv2)
-    pool2 = layers.MaxPooling2D((2, 2))(conv2)
+        self.conv2 = self._conv_block(128)
+        self.pool2 = layers.MaxPooling2D((2, 2))
 
-    conv3 = layers.Conv2D(256, (3, 3), padding='same')(pool2)
-    conv3 = layers.BatchNormalization()(conv3)
-    conv3 = layers.Activation('relu')(conv3)
-    conv3 = layers.Conv2D(256, (3, 3), padding='same')(conv3)
-    conv3 = layers.BatchNormalization()(conv3)
-    conv3 = layers.Activation('relu')(conv3)
-    conv3 = layers.Dropout(dropout_rate)(conv3)
-    pool3 = layers.MaxPooling2D((2, 2))(conv3)
+        self.conv3 = self._conv_block(256)
+        self.pool3 = layers.MaxPooling2D((2, 2))
 
-    conv4 = layers.Conv2D(512, (3, 3), padding='same')(pool3)
-    conv4 = layers.BatchNormalization()(conv4)
-    conv4 = layers.Activation('relu')(conv4)
-    conv4 = layers.Conv2D(512, (3, 3), padding='same')(conv4)
-    conv4 = layers.BatchNormalization()(conv4)
-    conv4 = layers.Activation('relu')(conv4)
-    conv4 = layers.Dropout(dropout_rate)(conv4)
-    pool4 = layers.MaxPooling2D((2, 2))(conv4)
+        self.conv4 = self._conv_block(512)
+        self.pool4 = layers.MaxPooling2D((2, 2))
 
-    # Bottleneck
-    conv5 = layers.Conv2D(1024, (3, 3), padding='same')(pool4)
-    conv5 = layers.BatchNormalization()(conv5)
-    conv5 = layers.Activation('relu')(conv5)
-    conv5 = layers.Conv2D(1024, (3, 3), padding='same')(conv5)
-    conv5 = layers.BatchNormalization()(conv5)
-    conv5 = layers.Activation('relu')(conv5)
-    conv5 = layers.Dropout(dropout_rate)(conv5)
+        self.bottleneck = self._conv_block(1024)
 
-    # Upsampling path (Decoder)
-    up6 = layers.Conv2DTranspose(512, (3, 3), strides=(2, 2), padding='same')(conv5)
-    concat6 = layers.concatenate([up6, conv4], axis=3)
-    conv6 = layers.Conv2D(512, (3, 3), padding='same')(concat6)
-    conv6 = layers.BatchNormalization()(conv6)
-    conv6 = layers.Activation('relu')(conv6)
-    conv6 = layers.Conv2D(512, (3, 3), padding='same')(conv6)
-    conv6 = layers.BatchNormalization()(conv6)
-    conv6 = layers.Activation('relu')(conv6)
-    conv6 = layers.Dropout(dropout_rate)(conv6)
+        # Decoder
+        self.up6 = layers.Conv2DTranspose(512, (3, 3), strides=(2, 2), padding='same')
+        self.conv6 = self._conv_block(512)
 
-    up7 = layers.Conv2DTranspose(256, (3, 3), strides=(2, 2), padding='same')(conv6)
-    concat7 = layers.concatenate([up7, conv3], axis=3)
-    conv7 = layers.Conv2D(256, (3, 3), padding='same')(concat7)
-    conv7 = layers.BatchNormalization()(conv7)
-    conv7 = layers.Activation('relu')(conv7)
-    conv7 = layers.Conv2D(256, (3, 3), padding='same')(conv7)
-    conv7 = layers.BatchNormalization()(conv7)
-    conv7 = layers.Activation('relu')(conv7)
-    conv7 = layers.Dropout(dropout_rate)(conv7)
+        self.up7 = layers.Conv2DTranspose(256, (3, 3), strides=(2, 2), padding='same')
+        self.conv7 = self._conv_block(256)
 
-    up8 = layers.Conv2DTranspose(128, (3, 3), strides=(2, 2), padding='same')(conv7)
-    concat8 = layers.concatenate([up8, conv2], axis=3)
-    conv8 = layers.Conv2D(128, (3, 3), padding='same')(concat8)
-    conv8 = layers.BatchNormalization()(conv8)
-    conv8 = layers.Activation('relu')(conv8)
-    conv8 = layers.Conv2D(128, (3, 3), padding='same')(conv8)
-    conv8 = layers.BatchNormalization()(conv8)
-    conv8 = layers.Activation('relu')(conv8)
-    conv8 = layers.Dropout(dropout_rate)(conv8)
+        self.up8 = layers.Conv2DTranspose(128, (3, 3), strides=(2, 2), padding='same')
+        self.conv8 = self._conv_block(128)
 
-    up9 = layers.Conv2DTranspose(64, (3, 3), strides=(2, 2), padding='same')(conv8)
-    concat9 = layers.concatenate([up9, conv1], axis=3)
-    conv9 = layers.Conv2D(64, (3, 3), padding='same')(concat9)
-    conv9 = layers.BatchNormalization()(conv9)
-    conv9 = layers.Activation('relu')(conv9)
-    conv9 = layers.Conv2D(64, (3, 3), padding='same')(conv9)
-    conv9 = layers.BatchNormalization()(conv9)
-    conv9 = layers.Activation('relu')(conv9)
-    conv9 = layers.Dropout(dropout_rate)(conv9)
+        self.up9 = layers.Conv2DTranspose(64, (3, 3), strides=(2, 2), padding='same')
+        self.conv9 = self._conv_block(64)
 
-    # Output layer
-    outputs = layers.Conv2D(1, (1, 1), activation='sigmoid')(conv9)
+        # Output
+        self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid')
 
-    model = models.Model(inputs=[inputs], outputs=[outputs])
+    def _conv_block(self, filters):
+        return tf.keras.Sequential([
+            layers.Conv2D(filters, (3, 3), padding='same'),
+            layers.BatchNormalization(),
+            layers.Activation('relu'),
+            layers.Conv2D(filters, (3, 3), padding='same'),
+            layers.BatchNormalization(),
+            layers.Activation('relu'),
+            layers.Dropout(self.dropout_rate)
+        ])
 
-    return model
+    def call(self, inputs, training=False):
+        # Encoder
+        c1 = self.conv1(inputs, training=training)
+        p1 = self.pool1(c1)
+
+        c2 = self.conv2(p1, training=training)
+        p2 = self.pool2(c2)
+
+        c3 = self.conv3(p2, training=training)
+        p3 = self.pool3(c3)
+
+        c4 = self.conv4(p3, training=training)
+        p4 = self.pool4(c4)
+
+        bn = self.bottleneck(p4, training=training)
+
+        # Decoder
+        u6 = self.up6(bn)
+        u6 = tf.concat([u6, c4], axis=3)
+        c6 = self.conv6(u6, training=training)
+
+        u7 = self.up7(c6)
+        u7 = tf.concat([u7, c3], axis=3)
+        c7 = self.conv7(u7, training=training)
+
+        u8 = self.up8(c7)
+        u8 = tf.concat([u8, c2], axis=3)
+        c8 = self.conv8(u8, training=training)
+
+        u9 = self.up9(c8)
+        u9 = tf.concat([u9, c1], axis=3)
+        c9 = self.conv9(u9, training=training)
+
+        return self.output_layer(c9)
+
+    def train_step(self, data):
+        # Unpack the data. Its structure depends on your model and
+        # on what you pass to `fit()`.
+        x, y = data
+
+        # zero_channel = np.zeros((x.shape[0], x.shape[1], x.shape[2], 1))
+        zero_channel = tf.zeros_like(x[..., :1])  # Cùng shape với 1 channel
+
+        total_loss = 0.0
+
+        with tf.GradientTape() as tape:
+            for _ in range(3):
+                # images_4ch = np.concatenate([x, zero_channel], axis=-1)
+                images_4ch = tf.concat([x, zero_channel], axis=-1)
+                y_pred = self(images_4ch, training=True)
+                
+                loss = self.compute_loss(y=y, y_pred=y_pred)
+                
+                # Cộng dồn loss
+                total_loss += loss
+
+                # Sử dụng output làm channel thứ 4 cho loop tiếp theo
+                zero_channel = y_pred
+
+            loss = total_loss / 3
+
+        # Compute gradients
+        trainable_vars = self.trainable_variables
+        gradients = tape.gradient(loss, trainable_vars)
+
+        # Update weights
+        self.optimizer.apply(gradients, trainable_vars)
+
+        # Update metrics (includes the metric that tracks the loss)
+        for metric in self.metrics:
+            if metric.name == "loss":
+                metric.update_state(loss)
+            else:
+                metric.update_state(y, y_pred)
+
+        # Return a dict mapping metric names to current value
+        return {m.name: m.result() for m in self.metrics}
 
 def unet(input_shape=(608, 576, 4), n_classes=1):
     """

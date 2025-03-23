@@ -7,6 +7,59 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
+class IoUMetric(tf.keras.metrics.Metric):
+    def __init__(self, name='iou', threshold=0.5, **kwargs):
+        super(IoUMetric, self).__init__(name=name, **kwargs)
+        self.threshold = threshold
+        self.iou_acc = self.add_weight(name='iou_acc', initializer='zeros')
+        self.count = self.add_weight(name='count', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
+        y_true = tf.cast(y_true, tf.float32)
+        intersection = tf.reduce_sum(y_true * y_pred_bin)
+        union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred_bin) - intersection
+        iou = intersection / (union + 1e-7)
+        self.iou_acc.assign_add(iou)
+        self.count.assign_add(1.0)
+
+    def result(self):
+        return self.iou_acc / self.count
+
+    def reset_states(self):
+        self.iou_acc.assign(0.0)
+        self.count.assign(0.0)
+
+
+class F1ScoreMetric(tf.keras.metrics.Metric):
+    def __init__(self, name='f1_score', threshold=0.5, **kwargs):
+        super(F1ScoreMetric, self).__init__(name=name, **kwargs)
+        self.threshold = threshold
+        self.f1_acc = self.add_weight(name='f1_acc', initializer='zeros')
+        self.count = self.add_weight(name='count', initializer='zeros')
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
+        y_true = tf.cast(y_true, tf.float32)
+
+        tp = tf.reduce_sum(y_true * y_pred_bin)
+        fp = tf.reduce_sum((1 - y_true) * y_pred_bin)
+        fn = tf.reduce_sum(y_true * (1 - y_pred_bin))
+
+        precision = tp / (tp + fp + K.epsilon())
+        recall = tp / (tp + fn + K.epsilon())
+
+        f1 = 2 * (precision * recall) / (precision + recall + K.epsilon())
+
+        self.f1_acc.assign_add(f1)
+        self.count.assign_add(1.0)
+
+    def result(self):
+        return self.f1_acc / self.count
+
+    def reset_states(self):
+        self.f1_acc.assign(0.0)
+        self.count.assign(0.0)
 
 def plot_predictions(predictions, save_path):
     """
