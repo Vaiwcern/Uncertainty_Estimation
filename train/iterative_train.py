@@ -43,13 +43,8 @@ if __name__ == "__main__":
     data_dir = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop"
     train_dataset = RTDataset(data_dir, trainparam.batch_size, normalize=True, train=True, thin_label=False)
 
-    print("HEHE")
-
     model = standard_unet(input_size=(None, None, 4), dropout_rate=0.0)
 
     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
 
-    inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss)
-
-    print(f"Using GPUs: {args.gpus}")
-    print("HEHE")
+    inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss())
