@@ -66,9 +66,13 @@ if __name__ == "__main__":
 
     train_dataset = train_dataset_wrapper.dataset
 
-    model.fit(
-        train_dataset,
-        epochs=trainparam.epochs,
-        steps_per_epoch=train_dataset_wrapper.steps_per_epoch
-    )
+    print("Total images:", len(train_dataset_wrapper.image_files))
+    print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
+
+
+    # model.fit(
+    #     train_dataset,
+    #     epochs=trainparam.epochs,
+    #     steps_per_epoch=train_dataset_wrapper.steps_per_epoch
+    # )
 
