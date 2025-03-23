@@ -49,7 +49,7 @@ if __name__ == "__main__":
 
     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
 
-    # inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss)
+    inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss)
 
     print(f"Using GPUs: {args.gpus}")
     print("HEHE")
