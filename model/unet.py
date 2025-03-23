@@ -105,6 +105,7 @@ class StandardUNet(tf.keras.Model):
             for _ in range(3):
                 # images_4ch = np.concatenate([x, zero_channel], axis=-1)
                 images_4ch = tf.concat([x, zero_channel], axis=-1)
+                print("HEHE", images_4ch.shape)
                 y_pred = self(images_4ch, training=True)
                 
                 loss = self.compute_loss(y=y, y_pred=y_pred)
