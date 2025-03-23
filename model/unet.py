@@ -37,16 +37,24 @@ class StandardUNet(tf.keras.Model):
         # Output
         self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid')
 
-    def _conv_block(self, filters):
-        return tf.keras.Sequential([
-            layers.Conv2D(filters, (3, 3), padding='same'),
+    def _conv_block(self, filters, input_channels=None):
+        layers_list = []
+
+        if input_channels is not None:
+            layers_list.append(layers.Conv2D(filters, (3, 3), padding='same', input_shape=(None, None, input_channels)))
+        else:
+            layers_list.append(layers.Conv2D(filters, (3, 3), padding='same'))
+
+        layers_list += [
             layers.BatchNormalization(),
             layers.Activation('relu'),
             layers.Conv2D(filters, (3, 3), padding='same'),
             layers.BatchNormalization(),
             layers.Activation('relu'),
             layers.Dropout(self.dropout_rate)
-        ])
+        ]
+
+        return tf.keras.Sequential(layers_list)
 
     def call(self, inputs, training=False):
         # Encoder
