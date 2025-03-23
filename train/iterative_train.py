@@ -4,8 +4,6 @@ import argparse
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-import numpy as np
-import matplotlib.pyplot as plt
 from types import SimpleNamespace
 import keras
 from CustomDataset.CustomDataset import RTDataset
@@ -47,37 +45,4 @@ if __name__ == "__main__":
 
     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
 
-    inference_train(model, train_dataset, epochs=10, optimizer=optim, loss_fn=focal_loss())
-
-# import tensorflow as tf
-# import os
-
-# # Kiểm tra phiên bản TensorFlow
-# tensorflow_version = tf.__version__
-# print(f"TensorFlow Version: {tensorflow_version}")
-
-# # Kiểm tra xem TensorFlow có GPU hỗ trợ không
-# gpu_available = tf.config.list_physical_devices('GPU')
-# if gpu_available:
-#     print("TensorFlow is using GPU.")
-# else:
-#     print("TensorFlow is using CPU.")
-
-# # Kiểm tra phiên bản CUDA
-# try:
-#     cuda_version = os.popen("nvcc --version").read()
-#     cuda_version = cuda_version.split("release")[1].split(',')[0].strip() if 'release' in cuda_version else 'CUDA not installed'
-#     print(f"CUDA Version: {cuda_version}")
-# except Exception as e:
-#     print(f"Error in retrieving CUDA version: {e}")
-
-# # Kiểm tra phiên bản cuDNN (sử dụng file cudnn.h)
-# try:
-#     cudnn_version = os.popen('cat /usr/include/cudnn.h | grep CUDNN_MAJOR -A 2').read()
-#     if cudnn_version:
-#         cudnn_version = cudnn_version.split('\n')[0].split(' ')[-1]
-#         print(f"cuDNN Version: {cudnn_version}")
-#     else:
-#         print("cuDNN not installed or not found.")
-# except Exception as e:
-#     print(f"Error in retrieving cuDNN version: {e}")
+    inference_train(model, train_dataset, epochs=trainparam.epochs, optimizer=optim, loss_fn=focal_loss(), save_path=trainparam.save_path)

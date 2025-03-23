@@ -4,6 +4,8 @@ import numpy as np
 import tensorflow as tf
 import keras.backend as K
 import numpy as np 
+import matplotlib.pyplot as plt
+import os
 
 
 def plot_predictions(predictions, save_path):
@@ -144,6 +146,6 @@ def inference_train(model, train_dataset, epochs, optimizer, loss_fn, save_path)
               f"IoU: {epoch_iou / num_batches:.4f}, "
               f"F1-score: {epoch_f1 / num_batches:.4f}")
         
-        if (epoch + 1) % 20 == 0:
+        if (epoch + 1) % 5 == 0:
             model.save_weights(os.path.join(save_path, 'epoch_' + str(epoch + 1) + '.weights.h5'))
             print("Epoch " + str(epoch + 1) + " saved!")
