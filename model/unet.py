@@ -7,7 +7,7 @@ class StandardUNet(tf.keras.Model):
         self.dropout_rate = dropout_rate
 
         # Encoder
-        self.conv1 = self._conv_block(64)
+        self.conv1 = self._conv_block(64, input_channels=input_channels)
         self.pool1 = layers.MaxPooling2D((2, 2))
 
         self.conv2 = self._conv_block(128)
