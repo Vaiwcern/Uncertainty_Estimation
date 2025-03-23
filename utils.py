@@ -12,7 +12,7 @@ def focal_loss(gamma=2.0, alpha=0.25):
         pt = y_true * y_pred + (1 - y_true) * (1 - y_pred)  # Nếu đã sigmoid, chỉ cần tính xác suất đúng
         focal_weight = alpha * tf.pow((1 - pt), gamma)
         
-        return -tf.reduce_mean(focal_weight * K.log(pt))
+        return -tf.reduce_mean(focal_weight * tf.math.log(pt))
     
     return loss
     
