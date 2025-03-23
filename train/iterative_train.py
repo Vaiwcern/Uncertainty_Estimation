@@ -69,6 +69,8 @@ if __name__ == "__main__":
             ]
         )
 
+    model.build(input_shape=(None, 1024, 1024, 4))
+
     dummy_x = tf.random.normal((1, 1024, 1024, 4))
     _ = model(dummy_x)
 
