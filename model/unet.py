@@ -95,7 +95,7 @@ class StandardUNet(tf.keras.Model):
         # Unpack the data. Its structure depends on your model and
         # on what you pass to `fit()`.
         x, y = data
-
+        x = x[..., :3]
         # zero_channel = np.zeros((x.shape[0], x.shape[1], x.shape[2], 1))
         zero_channel = tf.zeros_like(x[..., :1])  # Cùng shape với 1 channel
 

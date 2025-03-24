@@ -506,6 +506,12 @@ class RTDatasetTF:
         image, mask = tf.numpy_function(self.augment_pair_np, [image, mask], [tf.float32, tf.float32])
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
+
+        # ✅ Thêm channel thứ 4 toàn số 0
+        zero_channel = tf.zeros_like(image[..., :1])
+        image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
+        image.set_shape([None, None, 4])  # Cập nhật shape sau concat
+
         return image, mask
 
     def build_dataset(self):
