@@ -136,7 +136,7 @@ class StandardUNet(tf.keras.Model):
         # # Return a dict mapping metric names to current value
         # return {m.name: m.result() for m in self.metrics}
 
-        tf.print("Loss:", loss)
+        # tf.print("Loss:", loss)
 
         return {"loss": loss}
     

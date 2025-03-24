@@ -46,7 +46,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 6
+    BATCH_SIZE = 9
     LR = 1e-3
     EPOCHS = 10
 
@@ -103,7 +103,7 @@ if __name__ == "__main__":
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
         callbacks=[
             PrintLossCallback(),
-            SaveEveryNEpoch(save_path=trainparam.save_path, interval=5)
+            SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
         ]
     )
 
