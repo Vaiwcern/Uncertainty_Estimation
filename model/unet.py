@@ -125,15 +125,19 @@ class StandardUNet(tf.keras.Model):
         # Update weights
         self.optimizer.apply(gradients, trainable_vars)
 
-        # Update metrics (includes the metric that tracks the loss)
-        for metric in self.metrics:
-            if metric.name == "loss":
-                metric.update_state(loss)
-            else:
-                metric.update_state(y, y_pred)
+        # # Update metrics (includes the metric that tracks the loss)
+        # for metric in self.metrics:
+        #     if metric.name == "loss":
+        #         metric.update_state(loss)
+        #     else:
+        #         metric.update_state(y, y_pred)
 
-        # Return a dict mapping metric names to current value
-        return {m.name: m.result() for m in self.metrics}
+        # # Return a dict mapping metric names to current value
+        # return {m.name: m.result() for m in self.metrics}
+
+        print(f"Loss: {loss.numpy():.4f}")
+
+        return {"loss": loss}
     
     def build(self, input_shape):
         dummy_input = tf.random.normal((1, *input_shape[1:]))

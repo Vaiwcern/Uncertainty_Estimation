@@ -17,6 +17,12 @@ def parse_args():
     parser.add_argument('--gpus', type=str, required=True, help='Comma separated list of GPU IDs to use (e.g., "5,6").')
     return parser.parse_args()
 
+class PrintLossCallback(tf.keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        loss = logs.get("loss")
+        if loss is not None:
+            print(f"\n✅ Epoch {epoch + 1}: Average Loss = {loss:.4f}")
+
 if __name__ == "__main__":
     # Lấy đối số GPU từ dòng lệnh
     args = parse_args()
@@ -62,11 +68,12 @@ if __name__ == "__main__":
         model.compile(
             optimizer=optim,
             loss=focal_loss(),
-            metrics=[
-                'accuracy',
-                IoUMetric(),
-                F1ScoreMetric()
-            ]
+            callbacks=[PrintLossCallback()]
+            # metrics=[
+            #     'accuracy',
+            #     IoUMetric(),
+            #     F1ScoreMetric()
+            # ]
         )
         
         model.build(input_shape=(None, 1024, 1024, 4))
