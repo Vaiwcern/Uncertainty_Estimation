@@ -92,7 +92,7 @@ class StandardUNet(tf.keras.Model):
         return self.output_layer(c9)
 
     def train_step(self, data):
-        print("KEKE")
+        # print("KEKE")
         # print()
 
         # Unpack the data. Its structure depends on your model and
@@ -108,7 +108,7 @@ class StandardUNet(tf.keras.Model):
             for _ in range(3):
                 # images_4ch = np.concatenate([x, zero_channel], axis=-1)
                 images_4ch = tf.concat([x, zero_channel], axis=-1)
-                print("HEHE", _, images_4ch.shape)
+                # print("HEHE", _, images_4ch.shape)
 
                 y_pred = self(images_4ch, training=True)
                 

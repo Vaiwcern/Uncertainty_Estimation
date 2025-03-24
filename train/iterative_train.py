@@ -35,7 +35,7 @@ class SaveEveryNEpoch(tf.keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
         if (epoch + 1) % self.interval == 0:
             filename = os.path.join(self.save_path, f"model_epoch_{epoch + 1}.h5")
-            self.model.save(filename)
+            self.model.save_weights(filename)
             print(f"\n📦 Saved model to: {filename}")
 
 
