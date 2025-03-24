@@ -71,11 +71,11 @@ if __name__ == "__main__":
 
     model.build(input_shape=(None, 1024, 1024, 4))
 
-    dummy_x = tf.random.normal((1, 1024, 1024, 4))
-    _ = model(dummy_x)
+    # dummy_x = tf.random.normal((1, 1024, 1024, 4))
+    # _ = model(dummy_x)
 
     model.fit(
-        train_dataset,
+        train_dataset,  
         epochs=trainparam.epochs,
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch
     )
