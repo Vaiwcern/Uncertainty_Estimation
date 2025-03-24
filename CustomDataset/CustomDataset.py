@@ -525,7 +525,7 @@ class RTDatasetTF:
             dataset = dataset.map(self.tf_augment_pair, num_parallel_calls=tf.data.AUTOTUNE)
 
         if self.shuffle_data:
-            dataset = dataset.shuffle(buffer_size=100, reshuffle_each_iteration=True)
+            dataset = dataset.shuffle(buffer_size=1000, reshuffle_each_iteration=True)
 
         # ✅ repeat để tránh OutOfRange
         dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
