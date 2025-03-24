@@ -136,11 +136,10 @@ class StandardUNet(tf.keras.Model):
         return {m.name: m.result() for m in self.metrics}
     
     def build(self, input_shape):
-        # Tạo dummy input để kích hoạt các layers và đánh dấu model đã build
-        dummy_input = tf.keras.Input(shape=input_shape[1:])
+        dummy_input = tf.random.normal((1, *input_shape[1:]))
         _ = self.call(dummy_input, training=False)
-
         super().build(input_shape)
+
 
 
 def unet(input_shape=(608, 576, 4), n_classes=1):
