@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
     BATCH_SIZE = 12
     LR = 1e-3
-    EPOCHS = 10
+    EPOCHS = 100
 
     # Ensure steps_per_epoch and validation_steps are integers
     trainparam = SimpleNamespace(
