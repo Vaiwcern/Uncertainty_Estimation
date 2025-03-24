@@ -23,6 +23,22 @@ class PrintLossCallback(tf.keras.callbacks.Callback):
         if loss is not None:
             print(f"\n✅ Epoch {epoch + 1}: Average Loss = {loss:.4f}")
 
+class SaveEveryNEpoch(tf.keras.callbacks.Callback):
+    def __init__(self, save_path, interval=5):
+        super().__init__()
+        self.save_path = save_path
+        self.interval = interval
+
+        # Tạo thư mục nếu chưa tồn tại
+        os.makedirs(save_path, exist_ok=True)
+
+    def on_epoch_end(self, epoch, logs=None):
+        if (epoch + 1) % self.interval == 0:
+            filename = os.path.join(self.save_path, f"model_epoch_{epoch + 1}.h5")
+            self.model.save(filename)
+            print(f"\n📦 Saved model to: {filename}")
+
+
 if __name__ == "__main__":
     # Lấy đối số GPU từ dòng lệnh
     args = parse_args()
@@ -68,12 +84,11 @@ if __name__ == "__main__":
         model.compile(
             optimizer=optim,
             loss=focal_loss(),
-            callbacks=[PrintLossCallback()]
-            # metrics=[
-            #     'accuracy',
-            #     IoUMetric(),
-            #     F1ScoreMetric()
-            # ]
+            metrics=[
+                'accuracy',
+                IoUMetric(),
+                F1ScoreMetric()
+            ]
         )
         
         model.build(input_shape=(None, 1024, 1024, 4))
@@ -85,6 +100,10 @@ if __name__ == "__main__":
     model.fit(
         train_dataset,  
         epochs=trainparam.epochs,
-        steps_per_epoch=train_dataset_wrapper.steps_per_epoch
+        steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
+        callbacks=[
+            PrintLossCallback(),
+            SaveEveryNEpoch(save_path=trainparam.save_path, interval=5)
+        ]
     )
 
