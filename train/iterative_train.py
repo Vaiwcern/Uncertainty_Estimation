@@ -61,6 +61,13 @@ if __name__ == "__main__":
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model"
     )
 
+    # Redirect stdout và stderr để log ra file
+    log_file_path = os.path.join(trainparam.save_path, "log.txt")
+    os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
+
+    sys.stdout = open(log_file_path, "w")
+    sys.stderr = sys.stdout
+
     train_dataset_wrapper = RTDatasetTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
         batch_size=trainparam.batch_size,

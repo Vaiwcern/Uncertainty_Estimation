@@ -92,8 +92,8 @@ class StandardUNet(tf.keras.Model):
         return self.output_layer(c9)
 
     def train_step(self, data):
-        tf.print("KEKE")
-        print()
+        # tf.print("KEKE")
+        # print()
 
         # Unpack the data. Its structure depends on your model and
         # on what you pass to `fit()`.
