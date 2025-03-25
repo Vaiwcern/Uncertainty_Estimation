@@ -179,7 +179,7 @@ if __name__ == "__main__":
 
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
-        model = StandardUNet(...)
+        model = StandardUNet(input_channels=4, dropout_rate=0.0)
         model.build((None, 1024, 1024, 4))
         model.load_weights("model_epoch_10.weights.h5")
 
