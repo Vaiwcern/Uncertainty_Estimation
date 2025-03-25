@@ -51,12 +51,18 @@ def predict_and_save(model, dataset, image_files, save_dir):
     os.makedirs(save_dir, exist_ok=True)
 
     idx = 0  # Chỉ số của ảnh gốc
+    total = len(image_files)
 
     for (x, _) in tqdm(dataset, desc="Predicting"):
+        if idx >= total:
+            break  # Ngăn vòng lặp chạy mãi do repeat()
+
         x_orig = x[..., :3].numpy()  # Bỏ channel thứ 4, về numpy
         zero_channel = tf.zeros_like(x[..., :1])
 
         outputs = []
+        batch_size = x.shape[0]
+        gradcams_by_batch = [[] for _ in range(batch_size)]
 
         for i in range(3):
             x_4ch = tf.concat([x[..., :3], zero_channel], axis=-1)
@@ -64,9 +70,17 @@ def predict_and_save(model, dataset, image_files, save_dir):
             outputs.append(y_pred)
             zero_channel = y_pred
 
-            
+            for j in range(batch_size): 
+                prop_from_layer = model.layers[-1].name
+                prop_to_layer = 'center_block'
+                cls = 0
 
-        batch_size = x.shape[0]
+                clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
+                newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
+                                    normalize=True, abs_w=False, posit_w=False)
+                mymap = newsgc.SGC()  # Heatmap với shape (H, W)
+                gradcams_by_batch[j].append(mymap)
+
 
         for b in range(batch_size):
             if idx >= len(image_files):
@@ -88,6 +102,13 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 output_path = os.path.join(save_dir, f"{name_without_ext}_output_{i}.png")
                 imageio.imwrite(output_path, pred)
 
+                grad = gradcams_by_batch[b][i]
+                if isinstance(grad, tf.Tensor):  # Đề phòng trường hợp chưa convert
+                    grad = grad.numpy()
+                grad = (grad * 255).numpy().astype("uint8")
+                grad_path = os.path.join(save_dir, f"{name_without_ext}_grad_{i}.png")
+                imageio.imwrite(grad_path, grad)
+
             idx += 1
 
 
@@ -98,7 +119,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 21
+    BATCH_SIZE = 12
     LR = 1e-3
     EPOCHS = 100
 

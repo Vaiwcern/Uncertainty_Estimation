@@ -41,18 +41,27 @@ class StandardUNet(tf.keras.Model):
         layers_list = []
 
         if input_channels is not None:
-            layers_list.append(layers.Conv2D(filters, (3, 3), padding='same', input_shape=(None, None, input_channels)))
+            layers_list.append(
+                layers.Conv2D(filters, (3, 3), padding='same', input_shape=(None, None, input_channels))
+            )
         else:
             layers_list.append(layers.Conv2D(filters, (3, 3), padding='same'))
 
-        layers_list += [
-            layers.BatchNormalization(),
-            layers.Activation('relu'),
-            layers.Conv2D(filters, (3, 3), padding='same'),
+        layers_list.append(layers.BatchNormalization())
+        layers_list.append(layers.Activation('relu'))
+
+        # ✅ Tạo lớp conv thứ hai và đặt tên nếu là bottleneck
+        if filters == 1024:
+            conv2 = layers.Conv2D(filters, (3, 3), padding='same', name='center_block')
+        else:
+            conv2 = layers.Conv2D(filters, (3, 3), padding='same')
+
+        layers_list.extend([
+            conv2,
             layers.BatchNormalization(),
             layers.Activation('relu'),
             layers.Dropout(self.dropout_rate)
-        ]
+        ])
 
         return tf.keras.Sequential(layers_list)
 
