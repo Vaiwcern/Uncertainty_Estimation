@@ -181,6 +181,6 @@ if __name__ == "__main__":
     with strategy.scope():
         model = StandardUNet(input_channels=4, dropout_rate=0.0)
         model.build((None, 1024, 1024, 4))
-        model.load_weights("model_epoch_10.weights.h5")
+        model.load_weights(os.path.join(trainparam.save_path, "model_epoch_10.weights.h5"))
 
     predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
