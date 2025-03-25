@@ -110,7 +110,7 @@ if __name__ == "__main__":
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         input_shape=(1024, 1024, 4),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model"
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model_ver2"
     )
 
     # Redirect stdout và stderr để log ra file
