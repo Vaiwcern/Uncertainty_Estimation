@@ -14,7 +14,10 @@ import numpy as np
 import imageio
 from tqdm import tqdm
 
-
+from seggradcam.training_write import TrainingParameters, TrainingResults
+from seggradcam.training_plots import plot_predict_and_gt, plot_loss, plot_metric
+from seggradcam.seggradcam import SegGradCAM, SuperRoI, ClassRoI, PixelRoI, BiasRoI
+from seggradcam.visualize_sgc import SegGradCAMplot
 
 def parse_args():
     # Tạo đối số dòng lệnh để nhận GPU
@@ -61,6 +64,8 @@ def predict_and_save(model, dataset, image_files, save_dir):
             outputs.append(y_pred)
             zero_channel = y_pred
 
+            
+
         batch_size = x.shape[0]
 
         for b in range(batch_size):
@@ -93,7 +98,7 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 12
+    BATCH_SIZE = 21
     LR = 1e-3
     EPOCHS = 100
 
@@ -116,71 +121,71 @@ if __name__ == "__main__":
     sys.stderr = sys.stdout
 
     # TRAIN
-    # train_dataset_wrapper = RTDatasetTF(
-    #     dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
-    #     batch_size=trainparam.batch_size,
-    #     normalize=True,
-    #     train=True,
-    #     thin_label=False
-    # )
-
-    # train_dataset = train_dataset_wrapper.dataset
-
-    # print("Total images:", len(train_dataset_wrapper.image_files))
-    # print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
-
-    # # Create a MirroredStrategy.
-    # strategy = tf.distribute.MirroredStrategy()
-    # print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
-
-    # with strategy.scope():
-    #     model = StandardUNet(input_channels=4, dropout_rate=0.0)
-    #     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-    #     model.compile(
-    #         optimizer=optim,
-    #         loss=focal_loss(),
-    #         metrics=[
-    #             'accuracy',
-    #             IoUMetric(),
-    #             F1ScoreMetric()
-    #         ]
-    #     )
-        
-    #     model.build(input_shape=(None, 1024, 1024, 4))
-
-    #     dummy_x = tf.random.normal((1, 1024, 1024, 4))
-    #     _ = model(dummy_x)
-
-
-    # model.fit(
-    #     train_dataset,  
-    #     epochs=trainparam.epochs,
-    #     steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
-    #     callbacks=[
-    #         PrintLossCallback(),
-    #         SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
-    #     ]
-    # )
-
-    # PREDICT 
-    test_dataset_wrapper = RTDatasetTF(
+    train_dataset_wrapper = RTDatasetTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
         batch_size=trainparam.batch_size,
         normalize=True,
-        train=False,
+        train=True,
         thin_label=False
     )
 
-    test_dataset = test_dataset_wrapper.dataset
-    image_files = [str(p) for p in test_dataset_wrapper.image_files]
+    train_dataset = train_dataset_wrapper.dataset
 
-    print("Total images:", len(test_dataset_wrapper.image_files))
-    print("Steps per epoch:", test_dataset_wrapper.steps_per_epoch)
+    print("Total images:", len(train_dataset_wrapper.image_files))
+    print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
+    # Create a MirroredStrategy.
     strategy = tf.distribute.MirroredStrategy()
+    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+
     with strategy.scope():
         model = StandardUNet(input_channels=4, dropout_rate=0.0)
-        model.build((None, 1024, 1024, 4))
-        model.load_weights(os.path.join(trainparam.save_path, "model_epoch_10.weights.h5"))
+        optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
+        model.compile(
+            optimizer=optim,
+            loss=focal_loss(),
+            metrics=[
+                'accuracy',
+                IoUMetric(),
+                F1ScoreMetric()
+            ]
+        )
+        
+        model.build(input_shape=(None, 1024, 1024, 4))
 
-    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
+        dummy_x = tf.random.normal((1, 1024, 1024, 4))
+        _ = model(dummy_x)
+
+
+    model.fit(
+        train_dataset,  
+        epochs=trainparam.epochs,
+        steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
+        callbacks=[
+            PrintLossCallback(),
+            SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
+        ]
+    )
+
+    # PREDICT 
+    # test_dataset_wrapper = RTDatasetTF(
+    #     dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+    #     batch_size=trainparam.batch_size,
+    #     normalize=True,
+    #     train=False,
+    #     thin_label=False
+    # )
+
+    # test_dataset = test_dataset_wrapper.dataset
+    # image_files = [str(p) for p in test_dataset_wrapper.image_files]
+
+    # print("Total images:", len(test_dataset_wrapper.image_files))
+    # print("Steps per epoch:", test_dataset_wrapper.steps_per_epoch)
+
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    #     model = StandardUNet(input_channels=4, dropout_rate=0.0)
+    #     model.build((None, 1024, 1024, 4))
+    #     model.load_weights(os.path.join(trainparam.save_path, "model_epoch_10.weights.h5"))
+
+    # predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
