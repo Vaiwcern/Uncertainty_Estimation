@@ -106,9 +106,9 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 imageio.imwrite(output_path, pred)
 
                 grad = gradcams_by_batch[b][i]
-                if isinstance(grad, tf.Tensor):  # Đề phòng trường hợp chưa convert
+                if isinstance(grad, tf.Tensor):
                     grad = grad.numpy()
-                grad = (grad * 255).numpy().astype("uint8")
+                grad = (grad * 255).astype("uint8")
                 grad_path = os.path.join(save_dir, f"{name_without_ext}_grad_{i}.png")
                 imageio.imwrite(grad_path, grad)
 
