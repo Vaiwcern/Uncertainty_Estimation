@@ -214,10 +214,7 @@ if __name__ == "__main__":
     with strategy.scope():
         model = StandardUNet(input_channels=4, dropout_rate=0.0)
         model = convert_to_functional(model, input_shape=(1024, 1024, 4))
-        model.build((None, 1024, 1024, 4))
-        dummy_input = keras.Input(shape=(1024, 1024, 4))
-        _ = model(dummy_input)
-        model._set_inputs(dummy_input)
+        # model.build((None, 1024, 1024, 4))
         model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
     
     predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
