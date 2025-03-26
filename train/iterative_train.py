@@ -46,8 +46,14 @@ class SaveEveryNEpoch(tf.keras.callbacks.Callback):
             self.model.save_weights(filename)
             print(f"\n📦 Saved model to: {filename}")
 
+def convert_to_functional(model, input_shape=(1024, 1024, 4)):
+    inputs = keras.Input(shape=input_shape)
+    outputs = model(inputs)
+    return keras.Model(inputs=inputs, outputs=outputs)
 
 def predict_and_save(model, dataset, image_files, save_dir):
+    functional_model = convert_to_functional(model)
+
     os.makedirs(save_dir, exist_ok=True)
 
     idx = 0  # Chỉ số của ảnh gốc
@@ -75,8 +81,8 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 prop_to_layer = 'center_block'
                 cls = 0
 
-                clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
-                newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
+                clsroi = ClassRoI(model=functional_model, image=x_4ch[j], cls=cls)
+                newsgc = SegGradCAM(functional_model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
                                     normalize=True, abs_w=False, posit_w=False)
                 mymap = newsgc.SGC()  # Heatmap với shape (H, W)
                 gradcams_by_batch[j].append(mymap)
