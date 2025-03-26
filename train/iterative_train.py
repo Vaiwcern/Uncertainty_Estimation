@@ -52,8 +52,6 @@ def convert_to_functional(model, input_shape=(1024, 1024, 4)):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 def predict_and_save(model, dataset, image_files, save_dir):
-    functional_model = model
-
     os.makedirs(save_dir, exist_ok=True)
 
     idx = 0  # Chỉ số của ảnh gốc
@@ -81,12 +79,11 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 prop_to_layer = 'center_block'
                 cls = 0
 
-                clsroi = ClassRoI(model=functional_model, image=x_4ch[j], cls=cls)
-                newsgc = SegGradCAM(functional_model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
+                clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
+                newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
                                     normalize=True, abs_w=False, posit_w=False)
                 mymap = newsgc.SGC()  # Heatmap với shape (H, W)
                 gradcams_by_batch[j].append(mymap)
-
 
         for b in range(batch_size):
             if idx >= len(image_files):
@@ -116,7 +113,6 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 imageio.imwrite(grad_path, grad)
 
             idx += 1
-
 
 if __name__ == "__main__":
     # Lấy đối số GPU từ dòng lệnh
@@ -217,11 +213,11 @@ if __name__ == "__main__":
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
         model = StandardUNet(input_channels=4, dropout_rate=0.0)
+        model = convert_to_functional(model, input_shape=(1024, 1024, 4))
         model.build((None, 1024, 1024, 4))
         dummy_input = keras.Input(shape=(1024, 1024, 4))
         _ = model(dummy_input)
         model._set_inputs(dummy_input)
         model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
-
     
     predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
