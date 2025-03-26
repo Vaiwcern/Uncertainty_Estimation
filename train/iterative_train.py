@@ -52,7 +52,7 @@ def convert_to_functional(model, input_shape=(1024, 1024, 4)):
     return keras.Model(inputs=inputs, outputs=outputs)
 
 def predict_and_save(model, dataset, image_files, save_dir):
-    functional_model = convert_to_functional(model)
+    functional_model = model
 
     os.makedirs(save_dir, exist_ok=True)
 
