@@ -7,6 +7,7 @@ import numpy as np
 import cv2
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
+import csv
 
 from evaluation import compute_ccq, compute_ccq_normal
 
@@ -45,6 +46,7 @@ def evaluate_single_image(image_name):
 
         pred = outputs[-1]
         corr, comp, qual, f1 = compute_ccq(pred, mask, threshold=0.5, slack=5)
+        # corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5)
         return corr, comp, qual, f1
 
     except Exception as e:
@@ -71,3 +73,24 @@ if __name__ == "__main__":
     print(f"Completeness: {completeness / num_image:.4f}")
     print(f"Quality:      {quality / num_image:.4f}")
     print(f"F1 Score:     {f1_score / num_image:.4f}")
+
+    save_file = os.path.join(SAVE_PATH, "seg_results.csv")
+
+    with open(save_file, mode='w', newline='') as f:
+        writer = csv.writer(f)
+        # Header with chú thích
+        writer.writerow([
+            "Correctness (Precision)",
+            "Completeness (Recall)",
+            "Quality (IoU)",
+            "F1 Score"
+        ])
+        # 1 hàng giá trị
+        writer.writerow([
+            round(correctness / num_image, 4),
+            round(completeness / num_image, 4),
+            round(quality / num_image, 4),
+            round(f1_score / num_image, 4)
+        ])
+
+    print(f"\n✅ Results saved to: {save_file}")
