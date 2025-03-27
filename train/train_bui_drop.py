@@ -149,7 +149,7 @@ if __name__ == "__main__":
     sys.stdout = open(log_file_path, "w")
     sys.stderr = sys.stdout
 
-    train_dataset_wrapper = RTDatasetTF(
+    train_dataset_wrapper = MyDSTF(
         image_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/train/image",
         mask_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/train/mask",
         batch_size=trainparam.batch_size,
