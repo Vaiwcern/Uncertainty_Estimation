@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from types import SimpleNamespace
 import keras
-from CustomDataset.MyDS import RTDatasetTF
+from CustomDataset.MyDS import MyDSTF
 from model.unet import StandardUNet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
