@@ -127,9 +127,9 @@ if __name__ == "__main__":
     # Set CUDA_VISIBLE_DEVICES để chọn GPU
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
-    BATCH_SIZE = 8
+    BATCH_SIZE = 32
     LR = 1e-3
-    EPOCHS = 100
+    EPOCHS = 50
 
     # Ensure steps_per_epoch and validation_steps are integers
     trainparam = SimpleNamespace(
@@ -162,23 +162,23 @@ if __name__ == "__main__":
     print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
     # Create a MirroredStrategy.
-    strategy = tf.distribute.MirroredStrategy()
-    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+    # strategy = tf.distribute.MirroredStrategy()
+    # print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-    with strategy.scope():
-        model = StandardUNet(input_channels=4, dropout_rate=0.1)
-        optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-        model.compile(
-            optimizer=optim,
-            loss=focal_loss(),
-            metrics=[
-                'accuracy',
-                IoUMetric(),
-                F1ScoreMetric()
-            ]
-        )
+    # with strategy.scope():
+    model = StandardUNet(input_channels=4, dropout_rate=0.1)
+    optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
+    model.compile(
+        optimizer=optim,
+        loss=focal_loss(),
+        metrics=[
+            'accuracy',
+            IoUMetric(),
+            F1ScoreMetric()
+        ]
+    )
 
-        model.build(input_shape=(None, 256, 256, 4))
+    model.build(input_shape=(None, 256, 256, 4))
 
         # dummy_x = tf.random.normal((1, 1024, 1024, 4))
         # _ = model(dummy_x)
