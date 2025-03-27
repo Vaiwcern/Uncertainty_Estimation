@@ -13,6 +13,7 @@ import tensorflow as tf
 import numpy as np
 import imageio
 from tqdm import tqdm
+import cv2
 
 from seggradcam.training_write import TrainingParameters, TrainingResults
 from seggradcam.training_plots import plot_predict_and_gt, plot_loss, plot_metric
@@ -61,34 +62,23 @@ def predict_and_save(model, dataset, image_files, save_dir):
         if idx >= total:
             break  # Ngăn vòng lặp chạy mãi do repeat()
 
-        x_orig = x[..., :3].numpy()  # Bỏ channel thứ 4, về numpy
-        zero_channel = tf.zeros_like(x[..., :1])
+        outputs = [[] for _ in range(5)]
+        for k in range(5): 
+            x_orig = x[..., :3].numpy()  # Bỏ channel thứ 4, về numpy
+            zero_channel = tf.zeros_like(x[..., :1])
 
-        outputs = []
-        batch_size = x.shape[0]
-        gradcams_by_batch = [[] for _ in range(batch_size)]
+            batch_size = x.shape[0]
 
-        for i in range(3):
-            x_4ch = tf.concat([x[..., :3], zero_channel], axis=-1)
-            y_pred = model(x_4ch, training=False)
-            outputs.append(y_pred)
-            zero_channel = y_pred
-
-            for j in range(batch_size): 
-                prop_from_layer = model.layers[-1].name
-                prop_to_layer = 'center_block'
-                cls = 0
-
-                clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
-                newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
-                                    normalize=True, abs_w=False, posit_w=False)
-                mymap = newsgc.SGC()  # Heatmap với shape (H, W)
-                gradcams_by_batch[j].append(mymap)
+            for _ in range(3):
+                x_4ch = tf.concat([x[..., :3], zero_channel], axis=-1)
+                y_pred = model(x_4ch, training=True)
+                outputs[k].append(y_pred)
+                zero_channel = y_pred
 
         for b in range(batch_size):
             if idx >= len(image_files):
                 break
-
+            
             image_name = os.path.basename(image_files[idx])
             name_without_ext = os.path.splitext(image_name)[0]
 
@@ -97,20 +87,10 @@ def predict_and_save(model, dataset, image_files, save_dir):
             ori_path = os.path.join(save_dir, f"{name_without_ext}_input.png")
             imageio.imwrite(ori_path, ori_image)
 
-            # Lưu từng output mà không threshold
-            for i in range(3):
-                pred = outputs[i][b]  # (H, W, 1)
-                pred = tf.squeeze(pred, axis=-1)
-                pred = (pred * 255).numpy().astype("uint8")  # scale lên [0, 255] mà không threshold
-                output_path = os.path.join(save_dir, f"{name_without_ext}_output_{i}.png")
-                imageio.imwrite(output_path, pred)
-
-                grad = gradcams_by_batch[b][i]
-                if isinstance(grad, tf.Tensor):
-                    grad = grad.numpy()
-                grad = (grad * 255).astype("uint8")
-                grad_path = os.path.join(save_dir, f"{name_without_ext}_grad_{i}.png")
-                imageio.imwrite(grad_path, grad)
+            for k in range(5): 
+                output_image = (outputs[k][-1][b] * 255).numpy().astype("uint8")
+                output_path = os.path.join(save_dir, f"{name_without_ext}_output_{k}.png")
+                cv2.imwrite(output_path, output_image)
 
             idx += 1
 
@@ -213,4 +193,4 @@ if __name__ == "__main__":
         model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
         model = convert_to_functional(model, input_shape=(1024, 1024, 4))
     
-    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict"))
+    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55"))

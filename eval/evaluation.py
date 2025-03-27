@@ -56,3 +56,24 @@ def compute_ccq_normal(pred_score, gt_mask, threshold=0.5):
     qual = quality(TP, FP, FN)
     f1 = f1_score(corr, comp)
     return corr, comp, qual, f1
+
+
+def AULC(uncs, error):
+    idxs = np.argsort(uncs)
+    uncs_s = uncs[idxs]
+    error_s = error[idxs]
+    mean_error = error_s.mean()
+    error_csum = np.cumsum(error_s)
+    Fs = error_csum / np.arange(1, len(error_s) + 1)
+    Fs = mean_error / (Fs)
+    s = 1 / len(Fs)
+    return -1 + s * Fs.sum()
+
+def rAULC(uncs, error):
+    perf_aulc = AULC(error, error)
+    curr_aulc = AULC(uncs, error)
+    return curr_aulc / perf_aulc
+
+def corr(uncs, error): 
+    matrix = np.corrcoef(np.array(uncs), np.array(error))
+    return matrix[0][1]

@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/train/train_bui_drop.py", line 161, in <module>
-    print("Total images:", len(train_dataset_wrapper.image_files))
-AttributeError: 'MyDSTF' object has no attribute 'image_files'. Did you mean: 'image_paths'?
