@@ -146,8 +146,8 @@ if __name__ == "__main__":
     log_file_path = os.path.join(trainparam.save_path, "log.txt")
     os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
 
-    sys.stdout = open(log_file_path, "w")
-    sys.stderr = sys.stdout
+    # sys.stdout = open(log_file_path, "w")
+    # sys.stderr = sys.stdout
 
     train_dataset_wrapper = MyDSTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256",
@@ -183,6 +183,7 @@ if __name__ == "__main__":
         # dummy_x = tf.random.normal((1, 1024, 1024, 4))
         # _ = model(dummy_x)
 
+    print("Bắt đầu huấn luyện...")
     model.fit(
         train_dataset,
         epochs=trainparam.epochs,
