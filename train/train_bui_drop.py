@@ -143,7 +143,7 @@ if __name__ == "__main__":
     )
 
     # TRAIN
-    log_file_path = os.path.join(trainparam.save_path, "log.txt")
+    log_file_path = os.path.join("log.txt")
     os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
 
     sys.stdout = open(log_file_path, "w")
@@ -153,9 +153,7 @@ if __name__ == "__main__":
         image_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/train/image",
         mask_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/train/mask",
         batch_size=trainparam.batch_size,
-        normalize=True,
-        train=True,
-        thin_label=False
+        normalize=True
     )
 
     train_dataset = train_dataset_wrapper.dataset
