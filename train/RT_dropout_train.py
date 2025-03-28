@@ -7,18 +7,13 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from types import SimpleNamespace
 import keras
 from CustomDataset.CustomDataset import RTDatasetTF
-from model.unet import StandardUNet
+from model.unet import StandardUNet, VanilaUnet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
 import numpy as np
 import imageio
 from tqdm import tqdm
 import cv2
-
-from seggradcam.training_write import TrainingParameters, TrainingResults
-from seggradcam.training_plots import plot_predict_and_gt, plot_loss, plot_metric
-from seggradcam.seggradcam import SegGradCAM, SuperRoI, ClassRoI, PixelRoI, BiasRoI
-from seggradcam.visualize_sgc import SegGradCAMplot
 
 def parse_args():
     # Tạo đối số dòng lệnh để nhận GPU
@@ -112,7 +107,7 @@ if __name__ == "__main__":
         n_classes=1,
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        input_shape=(1024, 1024, 4),
+        input_shape=(1024, 1024, 3),
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model"
     )
 
@@ -125,6 +120,7 @@ if __name__ == "__main__":
 
     train_dataset_wrapper = RTDatasetTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+        channel = 3,
         batch_size=trainparam.batch_size,
         normalize=True,
         train=True,
@@ -141,12 +137,12 @@ if __name__ == "__main__":
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     with strategy.scope():
-        model = StandardUNet(input_channels=3, dropout_rate=0.1)
+        model = VanilaUnet(input_channels=3, dropout_rate=0.1
         optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
         model.compile(
             optimizer=optim,
             loss=focal_loss(),
-            metrics=[
+            metrics=[   
                 'accuracy',
                 IoUMetric(),
                 F1ScoreMetric()

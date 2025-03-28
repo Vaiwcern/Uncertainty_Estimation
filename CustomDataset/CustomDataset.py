@@ -447,13 +447,14 @@ class DRIVEDatasetTF:
         return dataset
 
 class RTDatasetTF:
-    def __init__(self, dataset_dir, batch_size=8, normalize=True, train=True, thin_label=False):
+    def __init__(self, dataset_dir, channel = 4, batch_size=8, normalize=True, train=True, thin_label=False):
         self.image_dir = Path(dataset_dir) / ("imagery" if train else "imagery_test")
         self.mask_dir = Path(dataset_dir) / ("masks" if thin_label else "masks_thick")
         self.batch_size = batch_size
         self.normalize = normalize
         self.augment = train
         self.shuffle_data = train
+        self.channel = channel
 
         self.image_files = sorted(self.image_dir.glob("*.png"))
         self.mask_files = [
@@ -507,10 +508,11 @@ class RTDatasetTF:
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
 
-        # ✅ Thêm channel thứ 4 toàn số 0
-        zero_channel = tf.zeros_like(image[..., :1])
-        image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
-        image.set_shape([None, None, 4])  # Cập nhật shape sau concat
+        if (self.channel == 4): 
+            # ✅ Thêm channel thứ 4 toàn số 0
+            zero_channel = tf.zeros_like(image[..., :1])
+            image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
+            image.set_shape([None, None, 4])  # Cập nhật shape sau concat
 
         return image, mask
 

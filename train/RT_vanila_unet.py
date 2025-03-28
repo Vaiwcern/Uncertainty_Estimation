@@ -107,7 +107,7 @@ if __name__ == "__main__":
         n_classes=1,
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        input_shape=(1024, 1024, 4),
+        input_shape=(1024, 1024, 3),
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model"
     )
 
@@ -120,6 +120,7 @@ if __name__ == "__main__":
 
     train_dataset_wrapper = RTDatasetTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+        channel = 3,
         batch_size=trainparam.batch_size,
         normalize=True,
         train=True,
@@ -141,7 +142,7 @@ if __name__ == "__main__":
         model.compile(
             optimizer=optim,
             loss=focal_loss(),
-            metrics=[
+            metrics=[   
                 'accuracy',
                 IoUMetric(),
                 F1ScoreMetric()
