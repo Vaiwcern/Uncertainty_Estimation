@@ -106,81 +106,81 @@ if __name__ == "__main__":
     )
 
     # TRAIN
-    log_file_path = os.path.join(trainparam.save_path, "log.txt")
-    os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
-
-    sys.stdout = open(log_file_path, "w")
-    sys.stderr = sys.stdout
-
-    train_dataset_wrapper = RTDatasetTF(
-        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
-        channel = 3,
-        batch_size=trainparam.batch_size,
-        normalize=True,
-        train=True,
-        thin_label=False
-    )
-
-    train_dataset = train_dataset_wrapper.dataset
-
-    print("Total images:", len(train_dataset_wrapper.image_files))
-    print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
-
-    # Create a MirroredStrategy.
-    strategy = tf.distribute.MirroredStrategy()
-    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
-
-    with strategy.scope():
-        model = VanilaUnet(input_channels=3, dropout_rate=0.1)
-        optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-        model.compile(
-            optimizer=optim,
-            loss=focal_loss(),
-            metrics=[   
-                'accuracy',
-                IoUMetric(),
-                F1ScoreMetric()
-            ]
-        )
-        
-        model.build(input_shape=(None, 1024, 1024, 3))
-
-    model.fit(
-        train_dataset,  
-        epochs=trainparam.epochs,
-        steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
-        callbacks=[
-            PrintLossCallback(),
-            SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
-        ]
-    )
-
-    # PREDICT 
-    # log_file_path = os.path.join(trainparam.save_path, "log_predict.txt")
+    # log_file_path = os.path.join(trainparam.save_path, "log.txt")
     # os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
 
     # sys.stdout = open(log_file_path, "w")
     # sys.stderr = sys.stdout
 
-    # test_dataset_wrapper = RTDatasetTF(
+    # train_dataset_wrapper = RTDatasetTF(
     #     dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+    #     channel = 3,
     #     batch_size=trainparam.batch_size,
     #     normalize=True,
-    #     train=False,
+    #     train=True,
     #     thin_label=False
     # )
 
-    # test_dataset = test_dataset_wrapper.dataset
-    # image_files = [str(p) for p in test_dataset_wrapper.image_files]
+    # train_dataset = train_dataset_wrapper.dataset
 
-    # print("Total images:", len(test_dataset_wrapper.image_files))
-    # print("Steps per epoch:", test_dataset_wrapper.steps_per_epoch)
+    # print("Total images:", len(train_dataset_wrapper.image_files))
+    # print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
+    # # Create a MirroredStrategy.
     # strategy = tf.distribute.MirroredStrategy()
+    # print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+
     # with strategy.scope():
-    #     model = StandardUNet(input_channels=4, dropout_rate=0.0)
-    #     model.build((None, 1024, 1024, 4))
-    #     model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
-    #     model = convert_to_functional(model, input_shape=(1024, 1024, 4))
+    #     model = VanilaUnet(input_channels=3, dropout_rate=0.1)
+    #     optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
+    #     model.compile(
+    #         optimizer=optim,
+    #         loss=focal_loss(),
+    #         metrics=[   
+    #             'accuracy',
+    #             IoUMetric(),
+    #             F1ScoreMetric()
+    #         ]
+    #     )
+        
+    #     model.build(input_shape=(None, 1024, 1024, 3))
+
+    # model.fit(
+    #     train_dataset,  
+    #     epochs=trainparam.epochs,
+    #     steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
+    #     callbacks=[
+    #         PrintLossCallback(),
+    #         SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
+    #     ]
+    # )
+
+    # PREDICT 
+    log_file_path = os.path.join(trainparam.save_path, "log_predict.txt")
+    os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
+
+    sys.stdout = open(log_file_path, "w")
+    sys.stderr = sys.stdout
+
+    test_dataset_wrapper = RTDatasetTF(
+        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+        batch_size=trainparam.batch_size,
+        normalize=True,
+        train=False,
+        thin_label=False
+    )
+
+    test_dataset = test_dataset_wrapper.dataset
+    image_files = [str(p) for p in test_dataset_wrapper.image_files]
+
+    print("Total images:", len(test_dataset_wrapper.image_files))
+    print("Steps per epoch:", test_dataset_wrapper.steps_per_epoch)
+
+    strategy = tf.distribute.MirroredStrategy()
+    with strategy.scope():
+        model = VanilaUnet(input_channels=3, dropout_rate=0.1)
+        model.build((None, 1024, 1024, 3))
+        model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
+        model = convert_to_functional(model, input_shape=(1024, 1024, 3))
     
-    # predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55"))
+    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55"))

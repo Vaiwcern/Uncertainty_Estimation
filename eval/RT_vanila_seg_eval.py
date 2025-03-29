@@ -39,17 +39,15 @@ def evaluate_single_image(image_name):
             return 0, 0, 0, 0
         mask = (mask >= 128).astype(np.uint8)
 
-        outputs = []
-        for i in range(5): 
-            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}.png") 
-            img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
-            if img is None:
-                print(f"[ERROR] File not found or unreadable: {output_path}")
-                return 0, 0, 0, 0
-            img = img.astype(np.float32) / 255.0
-            outputs.append(img)
+        output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output.png") 
+        img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
+        if img is None:
+            print(f"[ERROR] File not found or unreadable: {output_path}")
+            return 0, 0, 0, 0
+        img = img.astype(np.float32) / 255.0
+        output = img
 
-        pred = np.mean(outputs, axis=0)
+        pred = output
         corr, comp, qual, f1 = compute_ccq(pred, mask, threshold=0.5, slack=5)
         # corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5)
         return corr, comp, qual, f1
