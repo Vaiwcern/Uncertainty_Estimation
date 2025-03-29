@@ -108,7 +108,7 @@ if __name__ == "__main__":
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         input_shape=(1024, 1024, 3),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model"
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_dropout_model"
     )
 
     # TRAIN
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     with strategy.scope():
-        model = VanilaUnet(input_channels=3, dropout_rate=0.1
+        model = VanilaUnet(input_channels=3, dropout_rate=0.1)
         optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
         model.compile(
             optimizer=optim,
