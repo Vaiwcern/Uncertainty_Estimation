@@ -57,18 +57,12 @@ def predict_and_save(model, dataset, image_files, save_dir):
         if idx >= total:
             break  # Ngăn vòng lặp chạy mãi do repeat()
 
-        outputs = [[] for _ in range(5)]
+        batch_size = x.shape[0]
+
+        outputs = []
         for k in range(5): 
-            x_orig = x[..., :3].numpy()  # Bỏ channel thứ 4, về numpy
-            zero_channel = tf.zeros_like(x[..., :1])
-
-            batch_size = x.shape[0]
-
-            for _ in range(3):
-                x_4ch = tf.concat([x[..., :3], zero_channel], axis=-1)
-                y_pred = model(x_4ch, training=True)
-                outputs[k].append(y_pred)
-                zero_channel = y_pred
+            output = model(x, training=True)
+            outputs.append(output)
 
         for b in range(batch_size):
             if idx >= len(image_files):
@@ -78,12 +72,12 @@ def predict_and_save(model, dataset, image_files, save_dir):
             name_without_ext = os.path.splitext(image_name)[0]
 
             # Lưu ảnh gốc (convert về [0,255])
-            ori_image = (x_orig[b] * 255).astype("uint8")
+            ori_image = (x[b] * 255).numpy().astype("uint8")
             ori_path = os.path.join(save_dir, f"{name_without_ext}_input.png")
             imageio.imwrite(ori_path, ori_image)
 
             for k in range(5): 
-                output_image = (outputs[k][-1][b] * 255).numpy().astype("uint8")
+                output_image = (outputs[k][b] * 255).numpy().astype("uint8")
                 output_path = os.path.join(save_dir, f"{name_without_ext}_output_{k}.png")
                 cv2.imwrite(output_path, output_image)
 
