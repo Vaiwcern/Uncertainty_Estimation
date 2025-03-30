@@ -77,3 +77,47 @@ def rAULC(uncs, error):
 def corr(uncs, error): 
     matrix = np.corrcoef(np.array(uncs), np.array(error))
     return matrix[0][1]
+
+def split_and_mean(array, num_rows=2, num_cols=2):
+    """
+    Chia mảng 2D thành nhiều phần bằng nhau và tính mean của từng phần.
+
+    Parameters:
+        array (np.ndarray): Mảng đầu vào 2D.
+        num_rows (int): Số hàng muốn chia.
+        num_cols (int): Số cột muốn chia.
+
+    Returns:
+        crops (List[np.ndarray]): Danh sách các mảng con.
+        means (List[float]): Danh sách các giá trị mean của từng crop.
+    """
+    h, w = array.shape
+    assert h % num_rows == 0 and w % num_cols == 0, "Kích thước không chia hết!"
+
+    crop_h = h // num_rows
+    crop_w = w // num_cols
+
+    means = []
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            crop = array[i*crop_h:(i+1)*crop_h, j*crop_w:(j+1)*crop_w]
+            means.append(np.mean(crop))
+
+    return means
+
+def get_uncertainty_by_var(list, axis, num_rows, num_cols): 
+    matrix = np.var(list, axis=axis)
+    return split_and_mean(matrix, num_rows, num_cols)
+
+def get_uncertainty_by_std(list, axis, num_rows, num_cols): 
+    matrix = np.std(list, axis=axis)
+    return split_and_mean(matrix, num_rows, num_cols)
+
+def get_error_by_std(pred, mask, num_rows, num_cols): 
+    matrix = np.abs(pred - mask)
+    return split_and_mean(matrix, num_rows, num_cols)
+
+def get_error_by_mses(pred, mask, num_rows, num_cols): 
+    matrix = (pred - mask) ** 2
+    return split_and_mean(matrix, num_rows, num_cols)

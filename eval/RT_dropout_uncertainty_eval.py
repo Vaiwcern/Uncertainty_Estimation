@@ -26,34 +26,6 @@ print("Total images:", num_image)
 
 import numpy as np
 
-def split_and_mean(array, num_rows=2, num_cols=2):
-    """
-    Chia mảng 2D thành nhiều phần bằng nhau và tính mean của từng phần.
-
-    Parameters:
-        array (np.ndarray): Mảng đầu vào 2D.
-        num_rows (int): Số hàng muốn chia.
-        num_cols (int): Số cột muốn chia.
-
-    Returns:
-        crops (List[np.ndarray]): Danh sách các mảng con.
-        means (List[float]): Danh sách các giá trị mean của từng crop.
-    """
-    h, w = array.shape
-    assert h % num_rows == 0 and w % num_cols == 0, "Kích thước không chia hết!"
-
-    crop_h = h // num_rows
-    crop_w = w // num_cols
-
-    means = []
-
-    for i in range(num_rows):
-        for j in range(num_cols):
-            crop = array[i*crop_h:(i+1)*crop_h, j*crop_w:(j+1)*crop_w]
-            means.append(np.mean(crop))
-
-    return means
-
 def evaluate_single_image(image_name):
     try:
         name_without_ext = os.path.splitext(image_name)[0]
