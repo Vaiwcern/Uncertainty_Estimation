@@ -49,7 +49,7 @@ def evaluate_single_image(image_name):
             img = img.astype(np.float32) / 255.0
             variances.append(img)
 
-        pred = np.mean(outputs, axis=0)
+        pred = np.mean(variances, axis=0)
 
         return variances, pred, mask
 
@@ -79,35 +79,33 @@ if __name__ == "__main__":
     mse_errors = np.array(mse_errors)
 
     print("Std vs abs")
-    print(corr(std_uncertainties, abs_error))
-    print(rAULC(uncertainties**0.5, errors**0.5))
-
+    print("Corr", corr(std_uncertainties, abs_errors))
+    print("rAULR", rAULC(std_uncertainties, abs_errors))
     print("-----------------------------")
 
+    
     print("Std vs mse")
-    print(corr(uncertainties**0.5, errors))
-    print(rAULC(uncertainties**0.5, errors))
-
+    print("Corr", corr(std_uncertainties, mse_errors))
+    print("rAULR", rAULC(std_uncertainties, mse_errors))
     print("-----------------------------")
+
 
     print("Var vs abs")
-    print(corr(uncertainties, errors**0.5))
-    print(rAULC(uncertainties, errors**0.5))
-
+    print("Corr", corr(var_uncertainties, abs_errors))
+    print("rAULR", rAULC(var_uncertainties, abs_errors))
     print("-----------------------------")
 
 
     print("Var vs mse")
-    print(corr(uncertainties, errors))
-    print(rAULC(uncertainties, errors))
-
+    print("Corr", corr(var_uncertainties, mse_errors))
+    print("rAULR", rAULC(var_uncertainties, mse_errors))
     print("-----------------------------")
 
     plot_pairs = [
-        (uncertainties**0.5, errors**0.5, "Std vs Abs", "std_vs_abs.png"),
-        (uncertainties**0.5, errors, "Std vs MSE", "std_vs_mse.png"),
-        (uncertainties, errors**0.5, "Var vs Abs", "var_vs_abs.png"),
-        (uncertainties, errors, "Var vs MSE", "var_vs_mse.png")
+        (std_uncertainties, abs_errors, "Std vs Abs", "std_vs_abs.png"),
+        (std_uncertainties, mse_errors, "Std vs MSE", "std_vs_mse.png"),
+        (var_uncertainties, abs_errors, "Var vs Abs", "var_vs_abs.png"),
+        (var_uncertainties, mse_errors, "Var vs MSE", "var_vs_mse.png")
     ]
 
     for x, y, title, filename in plot_pairs:
