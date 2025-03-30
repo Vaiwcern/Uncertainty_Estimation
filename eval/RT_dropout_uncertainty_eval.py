@@ -9,6 +9,7 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import csv
 from plot import plot_unc_vs_error, plot_corr_rAULC
+import pandas as pd
 
 from evaluation import compute_ccq, compute_ccq_normal, corr, rAULC
 from evaluation import get_uncertainty_by_var, get_uncertainty_by_std
@@ -25,8 +26,6 @@ os.makedirs(SAVE_PATH, exist_ok=True)
 image_files = [f for f in os.listdir(IMAGE_TEST_PATH) if f.endswith(".png")]
 num_image = len(image_files)
 print("Total images:", num_image)
-
-import numpy as np
 
 def evaluate_single_image(image_name):
     try:
@@ -51,7 +50,13 @@ def evaluate_single_image(image_name):
 
         pred = np.mean(variances, axis=0)
 
-        return variances, pred, mask
+        var_unc += get_uncertainty_by_var(variances, axis=0, num_rows=2, num_cols=2)
+        std_unc += get_uncertainty_by_std(variances, axis=0, num_rows=2, num_cols=2)
+
+        abs_err += get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
+        mse_err += get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
+
+        return var_unc, std_unc, abs_err, mse_err
 
     except Exception as e:
         print(f"[ERROR] Exception while processing {image_name}: {e}")
@@ -66,12 +71,12 @@ if __name__ == "__main__":
     with ThreadPoolExecutor(max_workers=8) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, image_files), total=num_image))
 
-    for variances, pred, mask in results:
-        var_uncertainties += get_uncertainty_by_var(variances, num_rows=2, num_cols=2)
-        std_uncertainties += get_uncertainty_by_std(variances, num_rows=2, num_cols=2)
+    for var_unc, std_unc, abs_err, mse_err in results:
+        var_uncertainties += var_unc
+        std_uncertainties += std_unc
 
-        abs_errors += get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
-        mse_errors += get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
+        abs_errors += abs_err
+        mse_errors += mse_err
 
     var_uncertainties = np.array(var_uncertainties)
     std_uncertainties = np.array(std_uncertainties)
@@ -100,6 +105,33 @@ if __name__ == "__main__":
     print("Corr", corr(var_uncertainties, mse_errors))
     print("rAULR", rAULC(var_uncertainties, mse_errors))
     print("-----------------------------")
+
+    results = [
+        {
+            "Metric": "Std vs abs",
+            "Corr": corr(std_uncertainties, abs_errors),
+            "rAULR": rAULC(std_uncertainties, abs_errors)
+        },
+        {
+            "Metric": "Std vs mse",
+            "Corr": corr(std_uncertainties, mse_errors),
+            "rAULR": rAULC(std_uncertainties, mse_errors)
+        },
+        {
+            "Metric": "Var vs abs",
+            "Corr": corr(var_uncertainties, abs_errors),
+            "rAULR": rAULC(var_uncertainties, abs_errors)
+        },
+        {
+            "Metric": "Var vs mse",
+            "Corr": corr(var_uncertainties, mse_errors),
+            "rAULR": rAULC(var_uncertainties, mse_errors)
+        }
+    ]
+
+    # Chuyển thành DataFrame và lưu CSV
+    df = pd.DataFrame(results)
+    df.to_csv(os.path.join(SAVE_PATH, "uncertainty_result.csv"), index=False)
 
     plot_pairs = [
         (std_uncertainties, abs_errors, "Std vs Abs", "std_vs_abs.png"),
