@@ -66,7 +66,7 @@ def predict_and_save(model, dataset, image_files, save_dir):
 
         outputs = []
         batch_size = x.shape[0]
-        gradcams_by_batch = [[] for _ in range(batch_size)]
+        # gradcams_by_batch = [[] for _ in range(batch_size)]
 
         for i in range(3):
             x_4ch = tf.concat([x[..., :3], zero_channel], axis=-1)
@@ -74,16 +74,16 @@ def predict_and_save(model, dataset, image_files, save_dir):
             outputs.append(y_pred)
             zero_channel = y_pred
 
-            for j in range(batch_size): 
-                prop_from_layer = model.layers[-1].name
-                prop_to_layer = 'center_block'
-                cls = 0
+            # for j in range(batch_size): 
+            #     prop_from_layer = model.layers[-1].name
+            #     prop_to_layer = 'center_block'
+            #     cls = 0
 
-                clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
-                newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
-                                    normalize=True, abs_w=False, posit_w=False)
-                mymap = newsgc.SGC()  # Heatmap với shape (H, W)
-                gradcams_by_batch[j].append(mymap)
+            #     clsroi = ClassRoI(model=model, image=x_4ch[j], cls=cls)
+            #     newsgc = SegGradCAM(model, x_4ch[j], cls, prop_to_layer, prop_from_layer, roi=clsroi,
+            #                         normalize=True, abs_w=False, posit_w=False)
+            #     mymap = newsgc.SGC()  # Heatmap với shape (H, W)
+            #     gradcams_by_batch[j].append(mymap)
 
         for b in range(batch_size):
             if idx >= len(image_files):
@@ -105,12 +105,12 @@ def predict_and_save(model, dataset, image_files, save_dir):
                 output_path = os.path.join(save_dir, f"{name_without_ext}_output_{i}.png")
                 imageio.imwrite(output_path, pred)
 
-                grad = gradcams_by_batch[b][i]
-                if isinstance(grad, tf.Tensor):
-                    grad = grad.numpy()
-                grad = (grad * 255).astype("uint8")
-                grad_path = os.path.join(save_dir, f"{name_without_ext}_grad_{i}.png")
-                imageio.imwrite(grad_path, grad)
+                # grad = gradcams_by_batch[b][i]
+                # if isinstance(grad, tf.Tensor):
+                #     grad = grad.numpy()
+                # grad = (grad * 255).astype("uint8")
+                # grad_path = os.path.join(save_dir, f"{name_without_ext}_grad_{i}.png")
+                # imageio.imwrite(grad_path, grad)
 
             idx += 1
 

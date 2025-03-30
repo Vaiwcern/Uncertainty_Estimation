@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from types import SimpleNamespace
 import keras
-from CustomDataset.CustomDataset import RTDatasetTF
+from CustomDataset.CustomDataset import RTDatasetTF, MassachusettsDatasetTF
 from model.unet import StandardUNet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
@@ -88,9 +88,10 @@ def predict_and_save(model, dataset, image_files, save_dir):
             imageio.imwrite(ori_path, ori_image)
 
             for k in range(5): 
-                output_image = (outputs[k][-1][b] * 255).numpy().astype("uint8")
-                output_path = os.path.join(save_dir, f"{name_without_ext}_output_{k}.png")
-                cv2.imwrite(output_path, output_image)
+                for l in range(3): 
+                    output_image = (outputs[k][l][b] * 255).numpy().astype("uint8")
+                    output_path = os.path.join(save_dir, f"{name_without_ext}_output_{k}_iter_{l}.png")
+                    cv2.imwrite(output_path, output_image)
 
             idx += 1
 
@@ -113,7 +114,7 @@ if __name__ == "__main__":
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
         input_shape=(1024, 1024, 4),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_mc_dropout_model_ver2"
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model"
     )
 
     # TRAIN
@@ -188,9 +189,40 @@ if __name__ == "__main__":
 
     strategy = tf.distribute.MirroredStrategy()
     with strategy.scope():
-        model = StandardUNet(input_channels=4, dropout_rate=0.0)
+        model = StandardUNet(input_channels=4, dropout_rate=0.1)
         model.build((None, 1024, 1024, 4))
         model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
         model = convert_to_functional(model, input_shape=(1024, 1024, 4))
     
-    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55"))
+    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55_ver2"))
+
+
+    # PREDICT massachusetts
+    # log_file_path = os.path.join(trainparam.save_path, "log_predict_mass.txt")
+    # os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
+
+    # sys.stdout = open(log_file_path, "w")
+    # sys.stderr = sys.stdout
+
+    # test_dataset_wrapper = MassachusettsDatasetTF(
+    #     dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/Massachusetts_Crop",
+    #     batch_size=BATCH_SIZE,       
+    #     split='test',
+    #     channel=4,          
+    #     normalize=True
+    # )
+
+    # test_dataset = test_dataset_wrapper.dataset
+    # image_files = [str(p) for p in test_dataset_wrapper.image_files]
+
+    # print("Total images:", len(test_dataset_wrapper.image_files))
+    # print("Steps per epoch:", test_dataset_wrapper.steps_per_epoch)
+
+    # strategy = tf.distribute.MirroredStrategy()
+    # with strategy.scope():
+    #     model = StandardUNet(input_channels=4, dropout_rate=0.1)
+    #     model.build((None, 512, 512, 4))
+    #     model.load_weights(os.path.join(trainparam.save_path, "model_epoch_55.weights.h5"))
+    #     model = convert_to_functional(model, input_shape=(512, 512, 4))
+    
+    # predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_55_mass"))
