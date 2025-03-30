@@ -114,10 +114,10 @@ def get_uncertainty_by_std(list, axis, num_rows, num_cols):
     matrix = np.std(list, axis=axis)
     return split_and_mean(matrix, num_rows, num_cols)
 
-def get_error_by_std(pred, mask, num_rows, num_cols): 
+def get_error_by_abs(pred, mask, num_rows, num_cols): 
     matrix = np.abs(pred - mask)
     return split_and_mean(matrix, num_rows, num_cols)
 
-def get_error_by_mses(pred, mask, num_rows, num_cols): 
+def get_error_by_mse(pred, mask, num_rows, num_cols): 
     matrix = (pred - mask) ** 2
     return split_and_mean(matrix, num_rows, num_cols)

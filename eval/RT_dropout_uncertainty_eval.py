@@ -8,9 +8,11 @@ import cv2
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
 import csv
-import matplotlib.pyplot as plt
+from plot import plot_unc_vs_error, plot_corr_rAULC
 
 from evaluation import compute_ccq, compute_ccq_normal, corr, rAULC
+from evaluation import get_uncertainty_by_var, get_uncertainty_by_std
+from evaluation import get_error_by_abs, get_error_by_mse
 
 NUM_ITERATION = 3
 SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_dropout"
@@ -37,7 +39,7 @@ def evaluate_single_image(image_name):
             return 0, 0, 0, 0
         mask = (mask >= 128).astype(np.uint8)
 
-        outputs = []
+        variances = []
         for i in range(5):
             output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}.png") 
             img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
@@ -45,53 +47,39 @@ def evaluate_single_image(image_name):
                 print(f"[ERROR] File not found or unreadable: {output_path}")
                 return 0, 0, 0, 0
             img = img.astype(np.float32) / 255.0
-            outputs.append(img)
+            variances.append(img)
 
-        # Cal uncertainty ouput
-        uncertainty = np.var(outputs, axis=0)
-        uncs = split_and_mean(uncertainty, num_rows=2, num_cols=2)
-
-        # Cal error
-        # pred = np.mean(outputs, axis=0)
         pred = np.mean(outputs, axis=0)
-        error = np.abs(pred - mask) ** 2
-        errors = split_and_mean(error, num_rows=2, num_cols=2)
 
-        return uncs, errors
+        return variances, pred, mask
 
     except Exception as e:
         print(f"[ERROR] Exception while processing {image_name}: {e}")
         return 0, 0, 0, 0
 
-
-def plot_unc_vs_error(x, y, title, save_path):
-    plt.figure(figsize=(6, 5))
-    plt.scatter(x, y, s=10, alpha=0.4)
-    plt.xlabel("Uncertainty (sqrt)")
-    plt.ylabel("Prediction Error")
-    plt.title(title)
-    plt.grid(True)
-    plt.tight_layout()
-    plt.savefig(save_path)
-    plt.close() 
-
-
 if __name__ == "__main__":  
-    uncertainties = []
-    errors = []
+    var_uncertainties = []
+    std_uncertainties = []
+    abs_errors = []
+    mse_errors = []
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, image_files), total=num_image))
 
-    for unc_crops, error_crops in results:
-        uncertainties += unc_crops
-        errors += error_crops
+    for variances, pred, mask in results:
+        var_uncertainties += get_uncertainty_by_var(variances, num_rows=2, num_cols=2)
+        std_uncertainties += get_uncertainty_by_std(variances, num_rows=2, num_cols=2)
 
-    uncertainties = np.array(uncertainties)
-    errors = np.array(errors)
+        abs_errors += get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
+        mse_errors += get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
+
+    var_uncertainties = np.array(var_uncertainties)
+    std_uncertainties = np.array(std_uncertainties)
+    abs_errors = np.array(abs_errors)
+    mse_errors = np.array(mse_errors)
 
     print("Std vs abs")
-    print(corr(uncertainties**0.5, errors**0.5))
+    print(corr(std_uncertainties, abs_error))
     print(rAULC(uncertainties**0.5, errors**0.5))
 
     print("-----------------------------")
@@ -114,17 +102,6 @@ if __name__ == "__main__":
     print(rAULC(uncertainties, errors))
 
     print("-----------------------------")
-
-    def plot_corr_rAULC(x, y, title, filename):
-        plt.figure(figsize=(6, 5))
-        plt.scatter(x, y, s=10, alpha=0.4)
-        plt.xlabel("Uncertainty")
-        plt.ylabel("Error")
-        plt.title(f"{title}\nCorr={corr(x, y):.4f} | rAULC={rAULC(x, y):.4f}")
-        plt.grid(True)
-        plt.tight_layout()
-        plt.savefig(os.path.join(SAVE_PATH, filename))
-        plt.close()
 
     plot_pairs = [
         (uncertainties**0.5, errors**0.5, "Std vs Abs", "std_vs_abs.png"),
