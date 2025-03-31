@@ -1,6 +1,25 @@
 import matplotlib.pyplot as plt
 from evaluation import compute_ccq, compute_ccq_normal, corr, rAULC
 import os
+import numpy as np
+
+def plot_uncertainty_bar_chart(array: np.ndarray, title: str, save_path: str):
+    plt.figure(figsize=(max(12, len(array) * 0.1), 4))  # tự động giãn theo số lượng phần tử
+    plt.bar(range(len(array)), array, color='skyblue', edgecolor='black')
+    plt.title(title)
+    plt.xlabel('Sample Index')
+    plt.ylabel('Uncertainty')
+    plt.ylim(0, 1)
+    plt.grid(axis='y')
+
+    # Nếu số lượng phần tử nhỏ, in giá trị lên từng cột
+    if len(array) <= 30:
+        for i, val in enumerate(array):
+            plt.text(i, val + 0.01, f'{val:.2f}', ha='center', va='bottom', fontsize=8)
+
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
 
 def plot_unc_vs_error(x, y, title, save_path):
     plt.figure(figsize=(6, 5))

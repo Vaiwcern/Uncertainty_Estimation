@@ -16,8 +16,8 @@ from evaluation import get_uncertainty_by_var, get_uncertainty_by_std
 from evaluation import get_error_by_abs, get_error_by_mse
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iter_dropout"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55/"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iter_dropout_ver4"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55_ver4/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 
@@ -39,13 +39,16 @@ def evaluate_single_image(image_name):
         mask = (mask >= 128).astype(np.uint8)
 
         outputs = []
+        tmp = []
         for i in range(5):
-            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}.png") 
-            img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
-            if img is None:
-                print(f"[ERROR] File not found or unreadable: {output_path}")
-                return 0, 0, 0, 0
-            img = img.astype(np.float32) / 255.0
+            for j in range(3): 
+                output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}_iter_{j}.png") 
+                img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
+                if img is None:
+                    print(f"[ERROR] File not found or unreadable: {output_path}")
+                    return 0, 0, 0, 0
+                img = img.astype(np.float32) / 255.0
+            
             outputs.append(img)
 
         pred = np.mean(outputs, axis=0)

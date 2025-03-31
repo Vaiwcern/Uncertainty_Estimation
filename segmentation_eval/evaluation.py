@@ -1,5 +1,15 @@
 import numpy as np
 from scipy import ndimage
+import sklearn.metrics
+
+def min_max_normalize(array: np.ndarray) -> np.ndarray:
+    min_val = np.min(array)
+    max_val = np.max(array)
+    
+    if max_val == min_val:
+        return np.zeros_like(array)  # Tránh chia cho 0, mọi phần tử giống nhau → trả về 0
+    
+    return (array - min_val) / (max_val - min_val)
 
 def correctness(TP, FP, eps=1e-12):
     return TP / (TP + FP + eps)
@@ -121,3 +131,12 @@ def get_error_by_abs(pred, mask, num_rows, num_cols):
 def get_error_by_mse(pred, mask, num_rows, num_cols): 
     matrix = (pred - mask) ** 2
     return split_and_mean(matrix, num_rows, num_cols)
+
+def cal_roc_auc(labels, uncertainties): 
+    roc_auc = sklearn.metrics.roc_auc_score(labels, uncertainties) 
+    return roc_auc
+
+def cal_pr_auc(labels, uncertainties):
+    precision, recall, thresholds = sklearn.metrics.precision_recall_curve(labels, uncertainties)
+    pr_auc = sklearn.metrics.auc(recall, precision)
+    return pr_auc
