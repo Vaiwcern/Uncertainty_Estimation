@@ -47,9 +47,9 @@ def evaluate_single_image(args):
 
 if __name__ == "__main__":  
 
-    SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iter_dropout_ver2"
-    RT_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55_ver2/"
-    MASS_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55_mass/"
+    SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iter_dropout"
+    RT_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55/"
+    MASS_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55_mass_ver2/"
 
     RT_IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
     MASS_IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/Massachusetts_Crop/tiff/test"
@@ -69,8 +69,8 @@ if __name__ == "__main__":
     Mass_var_unc = []
     Mass_std_unc = []
 
-    rt_args = [(img, RT_OUTPUT_PATH, 2, 2, 2) for img in RT_image_files]
-    mass_args = [(img, MASS_OUTPUT_PATH, 1, 1, 1) for img in Mass_image_files]
+    rt_args = [(img, RT_OUTPUT_PATH, 2, 2, 1) for img in RT_image_files]
+    mass_args = [(img, MASS_OUTPUT_PATH, 1, 1, 2) for img in Mass_image_files]
 
     with ThreadPoolExecutor(max_workers=8) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, mass_args), total=num_Mass_image))
