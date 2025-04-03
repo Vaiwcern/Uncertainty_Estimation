@@ -175,7 +175,7 @@ if __name__ == "__main__":
     with strategy.scope():
         model = VanilaUnet(input_channels=3, dropout_rate=0.0)
         model.build((None, 1024, 1024, 3))
-        model.load_weights(os.path.join(trainparam.save_path, "model_epoch_20.weights.h5"))
+        model.load_weights(os.path.join(trainparam.save_path, "model_epoch_10.weights.h5"))
         model = convert_to_functional(model, input_shape=(1024, 1024, 3))
     
-    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_20"))
+    predict_and_save(model, dataset=test_dataset, image_files=image_files, save_dir=os.path.join(trainparam.save_path, "predict_epoch_10"))

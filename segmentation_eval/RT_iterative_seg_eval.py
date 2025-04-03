@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iterative_ver2"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model_ver2/predict/"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iterative"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_20/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 
@@ -59,7 +59,8 @@ def evaluate_single_image(image_name):
             # img = img.astype(np.float32) / 255.0
             # grads.append(img)
 
-        pred = np.mean(outputs, axis=0)
+        # pred = np.mean(outputs, axis=0)
+        pred = outputs[-1]
         corr, comp, qual, f1 = compute_ccq(pred, mask, threshold=0.5, slack=5)
         # corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5)
         return corr, comp, qual, f1

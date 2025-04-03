@@ -14,7 +14,7 @@ from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
 SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_vanila"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model/predict_epoch_55/"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model/predict_epoch_10/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 
