@@ -56,7 +56,7 @@ class SaveEveryNEpoch(tf.keras.callbacks.Callback):
             print(f"\n📦 Saved model to: {filename}")
 
 
-def convert_to_functional(model, input_shape=(1024, 1024, 4)):
+def convert_to_functional(model, input_shape=(256, 256, 4)):
     inputs = keras.Input(shape=input_shape)
     outputs = model(inputs)
     return keras.Model(inputs=inputs, outputs=outputs)

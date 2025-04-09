@@ -168,7 +168,7 @@ if __name__ == "__main__":
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
         callbacks=[
             PrintLossCallback(),
-            SaveEveryNEpoch(save_path=trainparam.save_path, interval=1)
+            SaveEveryNEpoch(save_path=trainparam.save_path, interval=10)
         ]
     )
 
