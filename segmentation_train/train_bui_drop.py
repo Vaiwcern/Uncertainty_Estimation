@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from types import SimpleNamespace
 import keras
-from CustomDataset.MyDS import MyDSTF
+from CustomDataset.MyDS import MyDS
 from model.unet import StandardUNet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
@@ -35,7 +35,7 @@ class PrintLossCallback(tf.keras.callbacks.Callback):
 
 
 class SaveEveryNEpoch(tf.keras.callbacks.Callback):
-    def __init__(self, save_path, interval=25):
+    def __init__(self, save_path, interval=5):
         super().__init__()
         self.save_path = save_path
         self.interval = interval
@@ -50,7 +50,7 @@ class SaveEveryNEpoch(tf.keras.callbacks.Callback):
             print(f"\n📦 Saved model to: {filename}")
 
 
-def convert_to_functional(model, input_shape=(256, 256, 4)):
+def convert_to_functional(model, input_shape=(128, 128, 3)):
     inputs = keras.Input(shape=input_shape)
     outputs = model(inputs)
     return keras.Model(inputs=inputs, outputs=outputs)
@@ -129,31 +129,32 @@ if __name__ == "__main__":
 
     BATCH_SIZE = 32
     LR = 1e-3
-    EPOCHS = 50
+    EPOCHS = 100
 
     # Ensure steps_per_epoch and validation_steps are integers
     trainparam = SimpleNamespace(
-        dataset_name="BUI256",
+        dataset_name="RoadTracer",
         learning_rate=LR,
         n_classes=1,
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        input_shape=(256, 256, 4),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI256"
+        input_shape=(128, 128, 3),
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_mc_dropout_model_ver2"
     )
 
     # TRAIN
     log_file_path = os.path.join(trainparam.save_path, "log.txt")
     os.makedirs(trainparam.save_path, exist_ok=True)  # Đảm bảo thư mục tồn tại
 
-    # sys.stdout = open(log_file_path, "w")
-    # sys.stderr = sys.stdout
+    sys.stdout = open(log_file_path, "w")
+    sys.stderr = sys.stdout
 
-    train_dataset_wrapper = MyDSTF(
-        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256",
+    train_dataset_wrapper = MyDS(
+        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_128",
         batch_size=trainparam.batch_size,
         normalize=True,
-        train=True
+        train=True,
+        thin_label=False
     )
 
     train_dataset = train_dataset_wrapper.dataset
@@ -162,35 +163,34 @@ if __name__ == "__main__":
     print("Steps per epoch:", train_dataset_wrapper.steps_per_epoch)
 
     # Create a MirroredStrategy.
-    # strategy = tf.distribute.MirroredStrategy()
-    # print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
+    strategy = tf.distribute.MirroredStrategy()
+    print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-    # with strategy.scope():
-    model = StandardUNet(input_channels=4, dropout_rate=0.1)
-    optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
-    model.compile(
-        optimizer=optim,
-        loss=focal_loss(),
-        metrics=[
-            'accuracy',
-            IoUMetric(),
-            F1ScoreMetric()
-        ]
-    )
+    with strategy.scope():
+        model = StandardUNet(input_channels=3, dropout_rate=0.1)
+        optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
+        model.compile(
+            optimizer=optim,
+            loss=focal_loss(),
+            metrics=[
+                'accuracy',
+                IoUMetric(),
+                F1ScoreMetric()
+            ]
+        )
 
-    model.build(input_shape=(None, 256, 256, 4))
+        model.build(input_shape=(None, 128, 128, 3))
 
         # dummy_x = tf.random.normal((1, 1024, 1024, 4))
         # _ = model(dummy_x)
 
-    print("Bắt đầu huấn luyện...")
     model.fit(
         train_dataset,
         epochs=trainparam.epochs,
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
         callbacks=[
             PrintLossCallback(),
-            SaveEveryNEpoch(save_path=trainparam.save_path, interval=25)
+            SaveEveryNEpoch(save_path=trainparam.save_path, interval=10)
         ]
     )
 
