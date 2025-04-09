@@ -138,7 +138,7 @@ if __name__ == "__main__":
         n_classes=1,
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        input_shape=(128, 128, 3),
+        input_shape=(128, 128, 4),
         save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_mc_dropout_model_ver2"
     )
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             ]
         )
 
-        model.build(input_shape=(None, 128, 128, 3))
+        model.build(input_shape=(None, 128, 128, 4))
 
         # dummy_x = tf.random.normal((1, 1024, 1024, 4))
         # _ = model(dummy_x)

@@ -13,7 +13,7 @@ class MyDSTF:
         self.mask_dir = Path(dataset_dir) / ("train/mask" if train else "test/mask")
         self.batch_size = batch_size
         self.normalize = normalize
-        self.augment = False
+        self.augment = train
         self.shuffle_data = train
         self.channel = channel
 
