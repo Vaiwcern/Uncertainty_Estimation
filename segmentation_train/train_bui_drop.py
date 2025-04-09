@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from types import SimpleNamespace
 import keras
-from CustomDataset.MyDS import MyDS
+from CustomDataset.MyDS import MyDSTF
 from model.unet import StandardUNet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
@@ -149,7 +149,7 @@ if __name__ == "__main__":
     sys.stdout = open(log_file_path, "w")
     sys.stderr = sys.stdout
 
-    train_dataset_wrapper = MyDS(
+    train_dataset_wrapper = MyDSTF(
         dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_128",
         batch_size=trainparam.batch_size,
         normalize=True,
