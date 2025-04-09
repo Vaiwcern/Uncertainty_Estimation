@@ -50,7 +50,7 @@ class SaveEveryNEpoch(tf.keras.callbacks.Callback):
             print(f"\n📦 Saved model to: {filename}")
 
 
-def convert_to_functional(model, input_shape=(128, 128, 3)):
+def convert_to_functional(model, input_shape=(256, 256, 3)):
     inputs = keras.Input(shape=input_shape)
     outputs = model(inputs)
     return keras.Model(inputs=inputs, outputs=outputs)
@@ -138,8 +138,8 @@ if __name__ == "__main__":
         n_classes=1,
         epochs=EPOCHS,
         batch_size=BATCH_SIZE,
-        input_shape=(128, 128, 4),
-        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_mc_dropout_model_ver2"
+        input_shape=(256, 256, 4),
+        save_path="/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI256_DROP"
     )
 
     # TRAIN
@@ -150,7 +150,7 @@ if __name__ == "__main__":
     sys.stderr = sys.stdout
 
     train_dataset_wrapper = MyDSTF(
-        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_128",
+        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256",
         batch_size=trainparam.batch_size,
         normalize=True,
         train=True,
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             ]
         )
 
-        model.build(input_shape=(None, 128, 128, 4))
+        model.build(input_shape=(None, 256, 256, 4))
 
         # dummy_x = tf.random.normal((1, 1024, 1024, 4))
         # _ = model(dummy_x)
