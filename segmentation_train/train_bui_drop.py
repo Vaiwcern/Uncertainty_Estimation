@@ -167,7 +167,7 @@ if __name__ == "__main__":
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     with strategy.scope():
-        model = StandardUNet(input_channels=3, dropout_rate=0.1)
+        model = StandardUNet(input_channels=4, dropout_rate=0.1)
         optim = keras.optimizers.Adam(learning_rate=trainparam.learning_rate)
         model.compile(
             optimizer=optim,
