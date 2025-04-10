@@ -30,7 +30,7 @@ class MyDSTF:
     def load_pair(self, image_path, mask_path):
         image = imageio.imread(image_path.decode("utf-8"))
         # mask = imageio.imread(mask_path.decode("utf-8"))[:, :, 0]
-        mask = imageio.imread(mask_path.decode("utf-8"), as_gray=True)
+        mask = imageio.imread(mask_path.decode("utf-8"), mode='L')
         mask = (mask >= 128).astype(np.float32)
         mask = np.expand_dims(mask, axis=-1)
 
