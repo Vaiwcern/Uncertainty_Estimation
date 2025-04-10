@@ -42,7 +42,7 @@ def evaluate_single_image(image_name):
 
         outputs = []
         for i in range(5): 
-            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}.png") 
+            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}_iter_2.png")
             img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
             if img is None:
                 print(f"[ERROR] File not found or unreadable: {output_path}")
