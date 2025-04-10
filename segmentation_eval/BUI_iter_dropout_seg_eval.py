@@ -15,7 +15,7 @@ from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
 SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/BUI_iter_dropout"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_iter_dropout/predict_epoch_100/"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_iter_dropout/predict_epoch_100_ver4/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/image"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/mask"
 
