@@ -180,7 +180,7 @@ if __name__ == "__main__":
     sys.stderr = sys.stdout
 
     test_dataset_wrapper = MyDSTF(
-        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop",
+        dataset_dir="/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256",
         batch_size=trainparam.batch_size,
         normalize=True,
         train=False,
