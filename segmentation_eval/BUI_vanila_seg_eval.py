@@ -13,10 +13,11 @@ import matplotlib.pyplot as plt
 from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_vanila"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model/predict_epoch_10/"
-IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
-MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/BUI_vanila"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_vanila/predict_epoch_100/"
+IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/image"
+MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/mask"
+
 
 os.makedirs(SAVE_PATH, exist_ok=True)
 
@@ -31,7 +32,7 @@ def get_pred(outputs):
 def evaluate_single_image(image_name):
     try:
         name_without_ext = os.path.splitext(image_name)[0]
-        mask_name = f"{'_'.join(Path(image_name).stem.split('_')[:-4])}_osm_{'_'.join(Path(image_name).stem.split('_')[4:])}.png"
+        mask_name = Path(image_name).name
         mask_path = os.path.join(MASK_PATH, mask_name)
         mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
         if mask is None:
