@@ -77,7 +77,9 @@ def predict_and_save(model, dataset, image_files, save_dir):
             ori_path = os.path.join(save_dir, f"{name_without_ext}_input.png")
             imageio.imwrite(ori_path, ori_image)
 
-            output_image = (output[b] * 255).numpy().astype("uint8")
+            pred = tf.squeeze(output[b], axis=-1)
+            print(f"{name_without_ext}: min={tf.reduce_min(pred).numpy():.4f}, max={tf.reduce_max(pred).numpy():.4f}")
+            output_image = (pred * 255).numpy().astype("uint8")
             output_path = os.path.join(save_dir, f"{name_without_ext}_output.png")
             cv2.imwrite(output_path, output_image)
 
