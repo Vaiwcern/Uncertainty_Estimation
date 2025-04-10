@@ -30,7 +30,7 @@ class MyDSTF:
     def load_pair(self, image_path, mask_path):
         image = imageio.imread(image_path.decode("utf-8"))
         # mask = imageio.imread(mask_path.decode("utf-8"))[:, :, 0]
-        mask = imageio.imread(mask_path.decode("utf-8"))
+        mask = imageio.imread(mask_path.decode("utf-8"), as_gray=True)
         mask = (mask >= 128).astype(np.float32)
         mask = np.expand_dims(mask, axis=-1)
 
@@ -38,7 +38,8 @@ class MyDSTF:
             image = image / 255.0
 
         print(f"Image shape: {image.shape}, min={np.min(image):.4f}, max={np.max(image):.4f}")
-        print(f"Mask unique: {np.unique(mask)}")
+        print("Mask shape:", mask.shape)
+        print("Mask unique:", np.unique(mask))
 
         return image.astype(np.float32), mask.astype(np.float32)
 
