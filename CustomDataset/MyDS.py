@@ -37,9 +37,9 @@ class MyDSTF:
         if self.normalize:
             image = image / 255.0
 
-        print(f"Image shape: {image.shape}, min={np.min(image):.4f}, max={np.max(image):.4f}")
-        print("Mask shape:", mask.shape)
-        print("Mask unique:", np.unique(mask))
+        # print(f"Image shape: {image.shape}, min={np.min(image):.4f}, max={np.max(image):.4f}")
+        # print("Mask shape:", mask.shape)
+        # print("Mask unique:", np.unique(mask))
 
         return image.astype(np.float32), mask.astype(np.float32)
 
