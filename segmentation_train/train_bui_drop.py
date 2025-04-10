@@ -13,6 +13,7 @@ import tensorflow as tf
 import numpy as np
 import imageio
 from tqdm import tqdm
+import cv2
 
 from seggradcam.training_write import TrainingParameters, TrainingResults
 from seggradcam.training_plots import plot_predict_and_gt, plot_loss, plot_metric
