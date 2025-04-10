@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/BUI256_DROP"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_dropout_model/predict_epoch_100/"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/BUI256_DROP"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI256_DROP/predict_epoch_100/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/image"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/mask"
 

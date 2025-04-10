@@ -16,7 +16,7 @@ from evaluation import get_uncertainty_by_var, get_uncertainty_by_std
 from evaluation import get_error_by_abs, get_error_by_mse
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/BUI_iter_dropout"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/BUI_iter_dropout"
 OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/BUI_iter_dropout/predict_epoch_100_ver4/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/image"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/BUI_256/test/mask"
