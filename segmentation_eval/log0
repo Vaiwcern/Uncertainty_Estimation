@@ -1,0 +1,2 @@
+nohup: ignoring input
+python3: can't open file '/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/train_bui_iter.py': [Errno 2] No such file or directory

@@ -16,8 +16,9 @@ from evaluation import get_uncertainty_by_var, get_uncertainty_by_std
 from evaluation import get_error_by_abs, get_error_by_mse
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iterative"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_20/"
+EPOCH = 20
+SAVE_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iterative_{EPOCH}"
+OUTPUT_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_{EPOCH}/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 

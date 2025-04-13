@@ -13,9 +13,10 @@ import matplotlib.pyplot as plt
 
 from evaluation import compute_ccq, compute_ccq_normal
 
+EPOCH = 55
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iterative"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_20/"
+SAVE_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iterative_{EPOCH}"
+OUTPUT_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_{EPOCH}/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 
@@ -76,7 +77,7 @@ if __name__ == "__main__":
     quality = 0
     f1_score = 0
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=32) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, image_files), total=num_image))
 
     for corr, comp, qual, f1 in results:

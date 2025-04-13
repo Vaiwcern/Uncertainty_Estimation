@@ -12,9 +12,10 @@ import matplotlib.pyplot as plt
 
 from evaluation import compute_ccq, compute_ccq_normal
 
+EPOCH = 55
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_vanila"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model/predict_epoch_10/"
+SAVE_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_vanila_{EPOCH}"
+OUTPUT_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_vanila_model/predict_epoch_{EPOCH}/"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 

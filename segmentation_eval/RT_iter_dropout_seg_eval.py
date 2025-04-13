@@ -14,8 +14,8 @@ import matplotlib.pyplot as plt
 from evaluation import compute_ccq, compute_ccq_normal
 
 NUM_ITERATION = 3
-SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_mc_dropout_ver2"
-OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_mc_dropout_model_ver2/predict_epoch_55/"
+SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/eval/RTdata_iter_dropout_ver3"
+OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iter_dropout_model/predict_epoch_55_ver3"
 IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
 MASK_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/masks_thick"
 
@@ -42,7 +42,7 @@ def evaluate_single_image(image_name):
 
         outputs = []
         for i in range(5): 
-            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}.png")
+            output_path = os.path.join(OUTPUT_PATH, f"{name_without_ext}_output_{i}_iter_2.png")
             img = cv2.imread(output_path, cv2.IMREAD_GRAYSCALE)
             if img is None:
                 print(f"[ERROR] File not found or unreadable: {output_path}")
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     quality = 0
     f1_score = 0
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=32) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, image_files), total=num_image))
 
     for corr, comp, qual, f1 in results:

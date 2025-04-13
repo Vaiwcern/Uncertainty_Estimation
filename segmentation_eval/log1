@@ -1,0 +1,4 @@
+nohup: ignoring input
+Total images: 65
+  0%|          | 0/65 [00:00<?, ?it/s] 63%|██████▎   | 41/65 [00:00<00:00, 407.89it/s]100%|██████████| 65/65 [00:00<00:00, 423.38it/s]
+All plots saved to folder.

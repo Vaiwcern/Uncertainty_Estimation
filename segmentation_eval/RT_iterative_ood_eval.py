@@ -45,9 +45,10 @@ def evaluate_single_image(args):
 
 if __name__ == "__main__":  
 
-    SAVE_PATH ="/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iterative"
-    RT_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_55/"
-    MASS_OUTPUT_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_55_mass/"
+    EPOCH = 55
+    SAVE_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/Uncertainty_Estimation/segmentation_eval/RTdata_iterative_{EPOCH}"
+    RT_OUTPUT_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_{EPOCH}/"
+    MASS_OUTPUT_PATH = f"/home/ltnghia02/MEDICAL_ITERATIVE/model/RTdata_iterative_model/predict_epoch_{EPOCH}_mass/"
 
     RT_IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/RTdata_Crop/imagery_test"
     MASS_IMAGE_TEST_PATH = "/home/ltnghia02/MEDICAL_ITERATIVE/Dataset/Massachusetts_Crop/tiff/test"
@@ -70,13 +71,13 @@ if __name__ == "__main__":
     rt_args = [(img, RT_OUTPUT_PATH, 2, 2) for img in RT_image_files]
     mass_args = [(img, MASS_OUTPUT_PATH, 1, 1) for img in Mass_image_files]
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, mass_args), total=num_Mass_image))
     for var_unc, std_unc in results:
         Mass_var_unc += var_unc
         Mass_std_unc += std_unc
 
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=16) as executor:
         results = list(tqdm(executor.map(evaluate_single_image, rt_args), total=num_RT_image))
     for var_unc, std_unc in results:
         RT_var_unc += var_unc
