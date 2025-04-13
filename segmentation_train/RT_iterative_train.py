@@ -6,7 +6,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from types import SimpleNamespace
 import keras
-from CustomDataset.CustomDataset import RTDatasetTF, MassachusettsDatasetTF
+from custom_dataset.CustomDataset import RTDatasetTF, MassachusettsDatasetTF
 from model.unet import StandardUNet
 from utils import focal_loss, IoUMetric, F1ScoreMetric
 import tensorflow as tf
@@ -24,27 +24,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Train Unet model on specific GPUs.')
     parser.add_argument('--gpus', type=str, required=True, help='Comma separated list of GPU IDs to use (e.g., "5,6").')
     return parser.parse_args()
-
-class PrintLossCallback(tf.keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
-        loss = logs.get("loss")
-        if loss is not None:
-            print(f"\n✅ Epoch {epoch + 1}: Average Loss = {loss:.4f}")
-
-class SaveEveryNEpoch(tf.keras.callbacks.Callback):
-    def __init__(self, save_path, interval=5):
-        super().__init__()
-        self.save_path = save_path
-        self.interval = interval
-
-        # Tạo thư mục nếu chưa tồn tại
-        os.makedirs(save_path, exist_ok=True)
-
-    def on_epoch_end(self, epoch, logs=None):
-        if (epoch + 1) % self.interval == 0:
-            filename = os.path.join(self.save_path, f"model_epoch_{epoch + 1}.weights.h5")
-            self.model.save_weights(filename)
-            print(f"\n📦 Saved model to: {filename}")
 
 def convert_to_functional(model, input_shape=(1024, 1024, 4)):
     inputs = keras.Input(shape=input_shape)

@@ -103,12 +103,11 @@ def plot_predictions(predictions, save_path):
 
 def focal_loss(gamma=2.0, alpha=0.25):
     def loss(y_true, y_pred):
-        epsilon = K.epsilon()  # Tránh log(0)
-
-        # Thay K.clip bằng tf.clip_by_value từ TensorFlow
-        y_pred = tf.clip_by_value(y_pred, epsilon, 1.0 - epsilon)  # Giữ giá trị trong (0,1)
+        epsilon = K.epsilon() 
         
-        pt = y_true * y_pred + (1 - y_true) * (1 - y_pred)  # Nếu đã sigmoid, chỉ cần tính xác suất đúng
+        y_pred = tf.clip_by_value(y_pred, epsilon, 1.0 - epsilon)
+        
+        pt = y_true * y_pred + (1 - y_true) * (1 - y_pred)
         focal_weight = alpha * tf.pow((1 - pt), gamma)
         
         return -tf.reduce_mean(focal_weight * tf.math.log(pt))
