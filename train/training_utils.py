@@ -42,3 +42,14 @@ class CustomLosses:
             return -tf.reduce_mean(focal_weight * tf.math.log(pt))
         return loss
 
+    @staticmethod
+    def iou_loss(smooth=1e-6):
+        def loss(y_true, y_pred):
+            y_true = tf.cast(y_true, tf.float32)
+            y_pred = tf.cast(y_pred, tf.float32)
+
+            intersection = tf.reduce_sum(y_true * y_pred, axis=[1, 2, 3])
+            union = tf.reduce_sum(y_true + y_pred, axis=[1, 2, 3]) - intersection
+            iou = (intersection + smooth) / (union + smooth)
+            return 1.0 - tf.reduce_mean(iou)
+        return loss
