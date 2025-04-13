@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument('--save_per_epoch', type=int, required=False, default=5,
         help="Save model weights every N epochs. Default: 5.")
 
-    parser.add_argument('--loss_function', type=int, required=True, defaut='focal'
+    parser.add_argument('--loss_function', type=int, required=True, default='focal',
         help="focal")
         
     parser.add_argument('--gpus', type=str, required=True,
