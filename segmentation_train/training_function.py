@@ -12,14 +12,14 @@ from training_utils import CustomCallbacks, CustomLosses
 def train(
     model: str,
     train_dataset_wrapper: tf.data.Dataset,
-    use_batchnorm: bool,
-    dropout_rate: float,
     input_channels: int,
-    learning_rate: float,
     num_epoch: int,
     batch_size: int,
     save_path: str,
     loss_function: str,
+    use_batchnorm: bool = False,
+    dropout_rate: float = False,
+    learning_rate: float = 0.001,
     save_per_epoch: int = 5,
 ) -> None:
 
@@ -62,7 +62,7 @@ def train(
         optim = keras.optimizers.Adam(learning_rate=learning_rate)
         model.compile(
             optimizer=optim,
-            loss=loss
+            loss=loss,
             metrics=[
                 'accuracy',
             ]
