@@ -69,8 +69,8 @@ class RTDatasetTF:
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
 
-        if (self.add_channel == 4): 
-            # ✅ Thêm channel thứ 4 toàn số 0
+        if self.add_channel: 
+            # add channel 4th full 0s
             zero_channel = tf.zeros_like(image[..., :1])
             image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
             image.set_shape([None, None, 4])  # Cập nhật shape sau concat
@@ -90,7 +90,7 @@ class RTDatasetTF:
         if self.shuffle_data:
             dataset = dataset.shuffle(buffer_size=3840, reshuffle_each_iteration=True)
 
-        # ✅ repeat để tránh OutOfRange
+        # avoid OutOfRange
         dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
         return dataset
 
@@ -155,7 +155,7 @@ class MassachusettsDatasetTF:
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
 
-        if self.add_channel == 4:
+        if self.add_channel:
             zero_channel = tf.zeros_like(image[..., :1])  # (H, W, 1)
             image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
             image.set_shape([None, None, 4])

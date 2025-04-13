@@ -3,7 +3,7 @@ import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import argparse
-from custom_dataset import DatasetController
+from custom_dataset.DatasetController import DatasetController
 from training_function import train
 
 def parse_args():
@@ -45,7 +45,7 @@ def parse_args():
     parser.add_argument('--save_per_epoch', type=int, required=False, default=5,
         help="Save model weights every N epochs. Default: 5.")
 
-    parser.add_argument('--loss_function', type=int, required=True, default='focal',
+    parser.add_argument('--loss_function', type=str, required=True, default='focal',
         help="focal")
         
     parser.add_argument('--gpus', type=str, required=True,
@@ -77,7 +77,7 @@ if __name__ == "__main__":
         raise ValueError(f"Unsupported dataset: {args.dataset}")
 
     # === Train === 
-    in_channels = args.input_channel + (1 if args.add_channel else 0)
+    in_channels = args.image_channel + (1 if args.add_channel else 0)
     train(
         model=args.model,
         train_dataset_wrapper=data_wrapper,
@@ -85,10 +85,11 @@ if __name__ == "__main__":
         num_epoch=args.num_epoch,
         batch_size=args.batch_size,
         save_path=args.save_path,
-        loss_function = args.loss_fucntion,
+        loss_function = args.loss_function,
         use_batchnorm=args.use_batchnorm,
         dropout_rate=args.dropout_rate,
         learning_rate=args.learning_rate,
-        save_per_epoch=args.save_per_epoch
+        save_per_epoch=args.save_per_epoch,
+        devices=args.gpus
     )
 

@@ -21,6 +21,7 @@ def train(
     dropout_rate: float = False,
     learning_rate: float = 0.001,
     save_per_epoch: int = 5,
+    devices: str = None,
 ) -> None:
 
     # Log setting
@@ -34,8 +35,11 @@ def train(
         f.write("\n")
 
     # Log training process
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    log_file_path = os.path.join(save_path, f"training_{timestamp}.log")
+    timestamp = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
+    train_log_dir = os.path.join(save_path, "train_logs")
+    os.makedirs(train_log_dir, exist_ok=True)
+
+    log_file_path = os.path.join(train_log_dir, f"training__{timestamp}.log")
 
     log_file = open(log_file_path, "w")
     sys.stdout = log_file
@@ -49,18 +53,16 @@ def train(
     strategy = tf.distribute.MirroredStrategy()
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
-    if model == "iterative": 
-        myModel = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
-    elif model == "vanila": 
-        myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
-    
     if loss_function == 'focal': 
         loss = CustomLosses.focal_loss()
 
     with strategy.scope():
-        model = myModel
+        if model == "iterative": 
+            myModel = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
+        elif model == "vanila": 
+            myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
         optim = keras.optimizers.Adam(learning_rate=learning_rate)
-        model.compile(
+        myModel.compile(
             optimizer=optim,
             loss=loss,
             metrics=[
@@ -68,7 +70,7 @@ def train(
             ]
         )
 
-    model.fit(
+    myModel.fit(
         train_dataset,  
         epochs=num_epoch,
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
