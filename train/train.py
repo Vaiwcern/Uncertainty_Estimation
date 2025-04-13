@@ -2,6 +2,9 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+
+from tensorflow.keras import mixed_precision
+mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 import yaml
@@ -107,7 +110,7 @@ if __name__ == "__main__":
         )
     else: 
         raise ValueError(f"Unsupported dataset: {args.dataset}")
-
+    
 
     # === Train === 
     in_channels = args.image_channel + (1 if args.add_channel else 0)

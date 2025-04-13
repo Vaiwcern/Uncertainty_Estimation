@@ -33,6 +33,9 @@ class CustomLosses:
     @staticmethod
     def focal_loss(gamma=2.0, alpha=0.25):
         def loss(y_true, y_pred):
+            y_true = tf.cast(y_true, tf.float32)
+            y_pred = tf.cast(y_pred, tf.float32)
+
             epsilon = K.epsilon()
             y_pred = tf.clip_by_value(y_pred, epsilon, 1.0 - epsilon)
 

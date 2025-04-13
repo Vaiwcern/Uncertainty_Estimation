@@ -8,7 +8,7 @@ from skimage.io import imread
 import pandas as pd
 
 class RTDatasetTF:
-    def __init__(self, dataset_dir, add_channel = True, batch_size=8, normalize=True, train=True, thin_label=False):
+    def __init__(self, dataset_dir, add_channel = True, batch_size=8, normalize=True, train=True, thin_label=False, buffer_size = None):
         self.image_dir = Path(dataset_dir) / ("imagery" if train else "imagery_test")
         self.mask_dir = Path(dataset_dir) / ("masks" if thin_label else "masks_thick")
         self.batch_size = batch_size
@@ -17,7 +17,16 @@ class RTDatasetTF:
         self.shuffle_data = train
         self.add_channel = add_channel
 
+        print("📂 Looking for images in:", self.image_dir.resolve())
+        print("🔎 Pattern: *.png")
         self.image_files = sorted(self.image_dir.glob("*.png"))
+        print("📸 Found:", len(self.image_files), "images")
+
+        if buffer_size:
+            self.buffer_size = buffer_size
+        else: 
+            self.buffer_size = len(self.image_files)
+            
         self.mask_files = [
             self.mask_dir / f"{'_'.join(f.stem.split('_')[:-4])}_osm_{'_'.join(f.stem.split('_')[4:])}.png"
             for f in self.image_files
@@ -58,11 +67,11 @@ class RTDatasetTF:
             mask = np.expand_dims(mask, axis=-1)
         return image.astype(np.float32), mask.astype(np.float32)
 
-    def tf_load_pair(self, image_path, mask_path):
+    def tf_load_pair(self, image_path, mask_path, filename):
         image, mask = tf.numpy_function(self.load_pair, [image_path, mask_path], [tf.float32, tf.float32])
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
-        return image, mask
+        return image, mask, filename
 
     def tf_augment_pair(self, image, mask):
         image, mask = tf.numpy_function(self.augment_pair_np, [image, mask], [tf.float32, tf.float32])
@@ -80,22 +89,24 @@ class RTDatasetTF:
     def build_dataset(self):
         img_paths = [str(p) for p in self.image_files]
         mask_paths = [str(p) for p in self.mask_files]
+        filenames = [p.name for p in self.image_files]
 
-        dataset = tf.data.Dataset.from_tensor_slices((img_paths, mask_paths))
-        dataset = dataset.map(self.tf_load_pair, num_parallel_calls=tf.data.AUTOTUNE)
+        dataset = tf.data.Dataset.from_tensor_slices((img_paths, mask_paths, filenames))
 
-        if self.augment:
+        if not self.augment:  # train=False
+            dataset = dataset.map(self.tf_load_pair, num_parallel_calls=tf.data.AUTOTUNE)
+            dataset = dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        else:
+            dataset = dataset.map(lambda x, y, z: self.tf_load_pair(x, y, z)[0:2], num_parallel_calls=tf.data.AUTOTUNE)
             dataset = dataset.map(self.tf_augment_pair, num_parallel_calls=tf.data.AUTOTUNE)
+            dataset = dataset.shuffle(buffer_size=self.buffer_size, reshuffle_each_iteration=True)
+            dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
 
-        if self.shuffle_data:
-            dataset = dataset.shuffle(buffer_size=3840, reshuffle_each_iteration=True)
-
-        # avoid OutOfRange
-        dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
         return dataset
 
+
 class MassachusettsDatasetTF:
-    def __init__(self, dataset_dir, batch_size=8, normalize=True, split='train', add_channel=True):
+    def __init__(self, dataset_dir, batch_size=8, normalize=True, split='train', add_channel=True, buffer_size = None):
         self.dataset_dir = Path(dataset_dir)
         self.batch_size = batch_size
         self.normalize = normalize
@@ -107,7 +118,16 @@ class MassachusettsDatasetTF:
         print(df.columns.tolist())
         df = df[df['split'] == split]
 
+        print("📂 Looking for images in:", self.image_dir.resolve())
+        print("🔎 Pattern: *.png")
         self.image_files = [self.dataset_dir / p for p in df['tiff_image_path'].tolist()]
+        print("📸 Found:", len(self.image_files), "images")
+
+        if buffer_size:
+            self.buffer_size = buffer_size
+        else: 
+            self.buffer_size = len(self.image_files)
+            
         self.mask_files = [self.dataset_dir / p for p in df['tif_label_path'].tolist()]
 
         if self.shuffle_data:
@@ -173,7 +193,7 @@ class MassachusettsDatasetTF:
             dataset = dataset.map(self.tf_augment_pair, num_parallel_calls=tf.data.AUTOTUNE)
 
         if self.shuffle_data:
-            dataset = dataset.shuffle(buffer_size=2048, reshuffle_each_iteration=True)
+            dataset = dataset.shuffle(buffer_size=self.buffer_size, reshuffle_each_iteration=True)
 
         dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
         return dataset

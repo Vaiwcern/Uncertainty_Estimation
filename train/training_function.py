@@ -44,6 +44,13 @@ def train(
             ]
         )
 
+    # if model == "iterative": 
+    #     myModel = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
+    # elif model == "vanila": 
+    #     myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
+    # for layer in myModel.layers:
+    #     print(layer.name, layer.dtype, layer.compute_dtype)
+
     myModel.fit(
         train_dataset,  
         epochs=num_epoch,

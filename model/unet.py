@@ -36,7 +36,7 @@ class IterativeUnet(tf.keras.Model):
         self.conv9 = self._conv_block(64)
 
         # Output
-        self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid')
+        self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid', dtype='float32')
 
     def _conv_block(self, filters, input_channels=None):
         layers_list = []
@@ -103,32 +103,34 @@ class IterativeUnet(tf.keras.Model):
 
         return self.output_layer(c9)
 
+    @tf.function(reduce_retracing=True)
     def train_step(self, data):
         x, y = data
         x = x[..., :3]
-        zero_channel = tf.zeros_like(x[..., :1])
+        x = tf.cast(x, tf.float16)
 
-        total_loss = 0.0
-        with tf.GradientTape() as tape:
-            for _ in range(3):
+        zero_channel = tf.zeros_like(x[..., :1])
+        zero_channel = tf.cast(zero_channel, tf.float16)  
+
+        def iterative_forward(x, zero_channel, y):
+            total_loss = 0.0
+            for _ in tf.range(3): 
                 images_4ch = tf.concat([x, zero_channel], axis=-1)
                 y_pred = self(images_4ch, training=True)
                 loss = self.compute_loss(y=y, y_pred=y_pred)
                 total_loss += loss
                 zero_channel = y_pred
+                zero_channel = tf.cast(zero_channel, tf.float16)  
+            return total_loss / 3.0
 
-            loss = total_loss / 3
+        with tf.GradientTape() as tape:
+            loss = iterative_forward(x, zero_channel, y)
 
         gradients = tape.gradient(loss, self.trainable_variables)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
         return {"loss": loss}
     
-    # def build(self, input_shape):
-    #     dummy_input = tf.random.normal((1, *input_shape[1:]))
-    #     _ = self.call(dummy_input, training=False)
-    #     super().build(input_shape)
-
 class VanilaUnet(tf.keras.Model):
     def __init__(self, input_channels=3, dropout_rate=0.5, use_batchnorm=True):
         super(VanilaUnet, self).__init__()
@@ -164,7 +166,7 @@ class VanilaUnet(tf.keras.Model):
         self.conv9 = self._conv_block(64)
 
         # Output
-        self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid')
+        self.output_layer = layers.Conv2D(1, (1, 1), activation='sigmoid', dtype='float32')
 
     def _conv_block(self, filters, input_channels=None):
         layers_list = []
@@ -246,8 +248,3 @@ class VanilaUnet(tf.keras.Model):
         self.optimizer.apply(gradients, trainable_vars)
 
         return {"loss": loss}
-    
-    # def build(self, input_shape):
-    #     dummy_input = tf.random.normal((1, *input_shape[1:]))
-    #     _ = self.call(dummy_input, training=False)
-    #     super().build(input_shape)
