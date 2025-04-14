@@ -2,7 +2,6 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
 from tensorflow.keras import mixed_precision
 mixed_precision.set_global_policy("mixed_float16")
 import argparse
@@ -11,25 +10,13 @@ import tensorflow as tf
 from pathlib import Path
 from tqdm import tqdm
 import imageio.v3 as imageio
+from datetime import datetime
 
-from evaluation_utils import load_model_from_folder, load_data_wrapper_from_folder
-from evaluation_function import predict, build_distributed_predict_step
-
-# ====== PREDICTION STEP ======
-@tf.function
-def distributed_predict_step(batch):
-    def step_fn(images, masks, filenames):
-        images = tf.cast(images, tf.float16)  # Nếu bạn dùng mixed precision
-        preds = model(images, training=False)
-        return preds, filenames
-    images, masks, filenames = batch
-    return strategy.run(step_fn, args=(images, masks, filenames))
+from evaluation_function import predict_and_save_results, load_data_wrapper_from_folder
+from custom_dataset.DatasetController import DatasetController
 
 def parse_args(): 
     parser = argparse.ArgumentParser(description='Train Unet model on specific GPUs.')
-
-    parser.add_argument('--model', type=str, required=True,
-        help="Model type. Options: 'iterative' or 'vanila'.")
 
     parser.add_argument('--dataset', type=str, required=True,
         help="Name of the dataset to be used. Options: 'RT' or 'Mass'.")
@@ -37,7 +24,7 @@ def parse_args():
     parser.add_argument('--dataset_path', type=str, required=True,
         help="Path to the dataset directory.")
     
-    parser.add_argument('--model_path`', type=str, required=True,
+    parser.add_argument('--model_path', type=str, required=True,
         help="Path to the directory where checkpoint saved.")
 
     parser.add_argument('--save_path', type=str, required=True,
@@ -49,49 +36,65 @@ def parse_args():
     parser.add_argument('--batch_size', type=int, required=True,
         help="")
 
+    parser.add_argument('--training_mode', action='store_true', required=True,
+        help="")
+
+    parser.add_argument('--iterative', type=int, required=True,
+        help="")
+
+    parser.add_argument('--samples', type=int, required=True,
+        help="")
+
     parser.add_argument('--gpus', type=str, required=True,
         help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
 
+    return parser.parse_args()
+
 if __name__ == "__main__":
     args = parse_args()
+
 
     # === Set devices ===
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
 
-    # === Load model ===
-    strategy = tf.distribute.MirroredStrategy()
-    with strategy.scope():
-        model, config = load_model_from_folder(args.model_path, epoch=args.epoch)
+    # === Log predicting process ===
+    timestamp = datetime.now().strftime("%Y-%m-%d__%H-%M-%S")
+    train_log_dir = os.path.join(args.save_path, "predicts_logs")
+    os.makedirs(train_log_dir, exist_ok=True)
 
-    # === hehe === 
-    distributed_predict_step = build_distributed_predict_step(
-        model=model,
-        strategy=strategy,
-        training=False,
-        iterative=3,
-        samples=5
-    )
+    log_file_path = os.path.join(train_log_dir, f"predict__{timestamp}.log")
 
+    log_file = open(log_file_path, "w")
+    sys.stdout = log_file
+    sys.stderr = log_file
+
+    print(f"Predicting dataset {args.dataset} at {args.dataset_path}")
 
     # === Load Dataset ===
-    data_wrapper = load_data_wrapper_from_folder(args.model_path, args.dataset, args.batch_size)
+    if args.dataset == "RT":
+        data_wrapper = DatasetController.get_roadtracer_train_wrapper(
+            dataset_path=args.dataset_path,
+            batch_size=args.batch_size,
+            add_channel=False,
+        )
+    elif args.dataset == "Mass":
+        data_wrapper = DatasetController.get_massachusetts_train_wrapper(
+            dataset_path=args.dataset_path,
+            batch_size=args.batch_size,
+            add_channel=False,
+        )
+    else: 
+        raise ValueError(f"Unsupported dataset: {args.dataset}")
 
 
     # ====== Predict ======
-    predict(data_wrapper)
-
-    # === Save predictions ===
-    for pred, filename in zip(all_preds, all_filenames):
-        # Convert TensorFlow bytes to str
-        if isinstance(filename, bytes):
-            filename = filename.decode("utf-8")
-        elif hasattr(filename, "numpy"):
-            filename = filename.numpy().decode("utf-8")
-
-        # Hậu xử lý
-        pred_mask = (pred[..., 0] >= 0.5).astype(np.uint8) * 255
-        save_path = os.path.join(save_dir, filename)
-        imageio.imwrite(save_path, pred_mask)
-
-    print(f"✅ Saved {len(all_preds)} predictions to {save_dir}")
+    predict_and_save_results(
+        model_path=args.model_path,
+        epoch=args.epoch,
+        data_wrapper=data_wrapper,
+        save_path=args.save_path,
+        training=args.training_mode,
+        iterative=args.iterative,
+        samples=args.samples
+    )
