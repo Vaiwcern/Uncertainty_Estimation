@@ -7,7 +7,7 @@ from tqdm import tqdm
 import math
 import yaml
 import imageio.v3 as imageio
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 import warnings
 
@@ -77,52 +77,6 @@ def load_model_from_folder(folder_path: str, epoch: int):
 
     return model
 
-def build_distributed_predict_step(
-    model,
-    strategy,
-    training: bool = False,
-    iterative: int = 1,
-    samples: int = 1
-):
-    @tf.function(reduce_retracing=True)
-    def distributed_predict_step(batch):
-        def step_fn(images, masks, filenames):
-            images = tf.cast(images, tf.float16)  # mixed precision
-            batch_size = tf.shape(images)[0]
-
-            # Kết quả shape: [samples, batch, iterative, H, W, 1]
-            result_array = tf.TensorArray(dtype=tf.float32, size=samples)
-
-            for s in tf.range(samples):
-                iter_array = tf.TensorArray(dtype=tf.float32, size=iterative)
-                zero_channel = tf.zeros_like(images[..., :1], dtype=tf.float16)
-
-                for i in tf.range(iterative):
-                    if iterative > 1:
-                        input_images = tf.concat([images, zero_channel], axis=-1)
-                    else:
-                        input_images = images
-
-                    y_pred = model(input_images, training=training)
-                    iter_array = iter_array.write(i, tf.cast(y_pred, tf.float32))  # ensure float32 loss & output
-
-                    if iterative > 1:
-                        zero_channel = tf.cast(y_pred, tf.float16)
-
-                # [iterative, batch, H, W, 1] → [batch, iterative, H, W, 1]
-                iter_stack = tf.transpose(iter_array.stack(), [1, 0, 2, 3, 4])
-                result_array = result_array.write(s, iter_stack)
-
-            # [samples, batch, iterative, H, W, 1] → [batch, samples, iterative, H, W, 1]
-            final_stack = tf.transpose(result_array.stack(), [1, 0, 2, 3, 4, 5])
-
-            return final_stack, masks, filenames
-
-        images, masks, filenames = batch
-        return strategy.run(step_fn, args=(images, masks, filenames))
-
-    return distributed_predict_step
-
 def _save_one_sample(pred_samples, file_name, mask, save_dir):
     os.makedirs(save_dir, exist_ok=True)
     base_name = os.path.splitext(file_name)[0]
@@ -156,11 +110,12 @@ def _save_one_sample(pred_samples, file_name, mask, save_dir):
 def save_all_predictions(all_preds, all_filenames, all_masks, save_dir, num_workers=8):
     os.makedirs(save_dir, exist_ok=True)
 
+    print(len(all_preds))
     assert len(all_preds) == len(all_filenames) == len(all_masks), \
         "Mismatch in number of predictions, filenames, or masks!"
 
     print(" === Predictions saving ... ===")
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
         tasks = [
             executor.submit(_save_one_sample, pred, fname, mask, save_dir)
             for pred, fname, mask in zip(all_preds, all_filenames, all_masks)
@@ -171,10 +126,45 @@ def save_all_predictions(all_preds, all_filenames, all_masks, save_dir, num_work
 
     print(f"✅ Saved all predictions and masks to: {save_dir}")
 
+def build_distributed_predict_step(model, strategy, training=False, iterative=1, samples=1):
+    @tf.function(reduce_retracing=True)
+    def distributed_predict_step(images):
+        def step_fn(images):
+            # batch_size = tf.shape(images)[0]
+            # tf.print("🔥 Replica shape:", tf.shape(images), "Batch size:", batch_size)
+            # images = tf.identity(images)  # để giữ node
+
+            images = tf.cast(images, tf.float16)  # Mixed precision
+            result_array = tf.TensorArray(dtype=tf.float32, size=samples)
+
+            for s in tf.range(samples):
+                iter_array = tf.TensorArray(dtype=tf.float32, size=iterative)
+                zero_channel = tf.zeros_like(images[..., :1], dtype=tf.float16)
+
+                for i in tf.range(iterative):
+                    if iterative > 1:
+                        input_images = tf.concat([images, zero_channel], axis=-1)
+                    else:
+                        input_images = images
+
+                    y_pred = model(input_images, training=training)
+                    iter_array = iter_array.write(i, tf.cast(y_pred, tf.float32))
+
+                    if iterative > 1:
+                        zero_channel = tf.cast(y_pred, tf.float16)
+
+                iter_stack = tf.transpose(iter_array.stack(), [1, 0, 2, 3, 4])
+                result_array = result_array.write(s, iter_stack)
+
+            final_stack = tf.transpose(result_array.stack(), [1, 0, 2, 3, 4, 5])
+            return final_stack
+
+        return strategy.run(step_fn, args=(images,))
+
+    return distributed_predict_step
 
 def predict(data_wrapper, strategy, distributed_predict_step):
     val_dataset = data_wrapper.dataset
-
     num_images = len(data_wrapper.image_files)
     steps_per_epoch = math.ceil(num_images / data_wrapper.batch_size)
     print("Total images:", num_images)
@@ -184,22 +174,34 @@ def predict(data_wrapper, strategy, distributed_predict_step):
     all_masks = []
     all_preds = []
 
-    for batch in tqdm(val_dataset.take(steps_per_epoch)):
-        preds_nested, masks, filenames = distributed_predict_step(batch)
+    val_dataset = strategy.experimental_distribute_dataset(val_dataset)
+    for step, batch in enumerate(tqdm(val_dataset)):
+        if step >= steps_per_epoch:
+            break
 
-        # ✅ Gather predictions safely (if preds_nested is nested structure)
-        gathered_preds = tf.nest.map_structure(lambda x: strategy.gather(x, axis=0), preds_nested)
-        gathered_preds = gathered_preds.numpy()  # shape: [batch, samples, iterative, H, W, 1]
+        images, masks, filenames = batch
+        # for i, t in enumerate(strategy.experimental_local_results(images)):
+        #     tf.print(f"[DEBUG] images shape on GPU {i}:", tf.shape(t))
 
-        gathered_filenames = strategy.gather(filenames, axis=0).numpy()
-        gathered_masks = strategy.gather(masks, axis=0).numpy()
+        per_replica_preds = distributed_predict_step(images)\
+            
+        local_results = strategy.experimental_local_results(per_replica_preds)
+        # print(f"Local results count: {len(local_results)}")
+        # for i, tensor in enumerate(local_results):
+            # print(f"[GPU {i}] pred shape: {tensor.shape}")
+        gathered_preds = tf.concat(local_results, axis=0).numpy()
+
+        masks_np = tf.concat(strategy.experimental_local_results(masks), axis=0).numpy()
+        filenames_np = tf.concat(strategy.experimental_local_results(filenames), axis=0).numpy()
+        filenames_np = [f.decode("utf-8") if isinstance(f, bytes) else f for f in filenames_np]
 
         all_preds.extend(gathered_preds)
-        all_filenames.extend([f.decode("utf-8") if isinstance(f, bytes) else f for f in gathered_filenames])
-        all_masks.extend(gathered_masks)
+        all_masks.extend(masks_np)
+        all_filenames.extend(filenames_np)
+
+        # print(f"[DEBUG] preds: {gathered_preds.shape}, masks: {masks_np.shape}, filenames: {len(filenames_np)}")
 
     return all_preds, all_filenames, all_masks
-
 
 def predict_and_save_results(
     model_path: str,
