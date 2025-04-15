@@ -6,11 +6,9 @@ from tensorflow.keras import mixed_precision
 mixed_precision.set_global_policy("mixed_float16")
 
 import argparse
-from datetime import datetime
 
-from predict_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController
-from evaluation_function import segmentation_evaluation
+from evaluation_function import segmentation_evaluation, uncertainty_evaluation
 
 
 def parse_args():
@@ -46,8 +44,11 @@ def parse_args():
     parser.add_argument('--relaxed_ccq', action='store_true',
         help="Use relaxed CCQ metric (with slack).")
 
-    parser.add_argument('--batch_size', type=int, default=2,
-        help="Batch size for prediction. Default is 2.")
+    parser.add_argument('--n_rows', type=int, required=False,
+        help="Cut images into n_rows x n_cols for uncertainty estimation.")
+
+    parser.add_argument('--n_cols', type=int, required=False,
+        help="Cut images into n_rows x n_cols for uncertainty estimation.")
 
     parser.add_argument('--gpus', type=str, required=True,
             help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
@@ -67,6 +68,10 @@ if __name__ == "__main__":
         if not args.ood_dataset or not args.ood_dataset_path:
             raise ValueError("Arguments '--ood_dataset' and '--ood_dataset_path' are required for OOD evaluation.")
         
+    if args.eval_type == "uncertainty":
+        if not args.n_rows or not args.n_cols:
+            raise ValueError("Arguments '--n_rows' and '--n_cols' are required for uncertainty estimation.")
+        
 
     # === Set devices ===
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
@@ -76,13 +81,13 @@ if __name__ == "__main__":
     if args.dataset == "RT":
         data_wrapper = DatasetController.get_roadtracer_test_wrapper(
             dataset_path=args.dataset_path,
-            batch_size=args.batch_size,
+            batch_size=1,
             add_channel=False,
         )
     elif args.dataset == "Mass":
         data_wrapper = DatasetController.get_massachusetts_test_wrapper(
             dataset_path=args.dataset_path,
-            batch_size=args.batch_size,
+            batch_size=1,
             add_channel=False,
         )
     else:
@@ -101,8 +106,14 @@ if __name__ == "__main__":
         )
 
     elif args.eval_type == 'uncertainty':
-        print("Uncertainty evaluation is not yet implemented.")
-
+        uncertainty_evaluation(
+                    data_wrapper=data_wrapper,
+                    iterative=args.iterative,
+                    samples=args.samples,
+                    pred_dir=args.prediction_path,
+                    save_path=args.save_path,
+                    num_workers = args.num_workers
+                )
     elif args.eval_type == 'out-of-distribution':
         print("OOD evaluation is not yet implemented.")
 

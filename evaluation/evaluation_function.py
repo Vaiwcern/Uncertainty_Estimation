@@ -4,38 +4,44 @@ import numpy as np
 import imageio
 from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
+import pandas as pd
 
-from metric import compute_ccq, compute_ccq_normal
+from metric import compute_ccq, compute_ccq_normal, corr, rAULC
+from metric import get_uncertainty_by_var, get_uncertainty_by_std
+from metric import get_error_by_abs, get_error_by_mse
+
+from plot import plot_corr_rAULC
+
+def get_pred_n_mask(base_name, pred_dir, iterative, samples): 
+    # --- Load mask ---
+    mask_path = os.path.join(pred_dir, f"{base_name}_mask.png")
+    mask = imageio.imread(mask_path)
+    if mask is None:
+        print(f"[ERROR] Cannot read mask: {mask_path}")
+        return 0, 0, 0, 0
+    mask = (mask >= 128).astype(np.uint8)
+
+    # --- Load predictions: pick the last iterative of each samples ---
+    final_preds = []
+    for s in range(samples):
+        last_iter = iterative - 1  # last iterative
+        pred_filename = f"{base_name}_sample_{s}_iter{last_iter}.png"
+        pred_path = os.path.join(pred_dir, pred_filename)
+        pred_img = imageio.imread(pred_path)
+
+        if pred_img is None:
+            print(f"[ERROR] Cannot read prediction: {pred_path}")
+            return 0, 0, 0, 0
+
+        pred_img = pred_img.astype(np.float32) / 255.0
+        final_preds.append(pred_img)
+    return final_preds, mask
 
 def segmentation_evaluate_single_image(args):
     image_name, iterative, samples, pred_dir, relax = args
     try:
         base_name = os.path.splitext(os.path.basename(image_name))[0]
-
-        # --- Load mask ---
-        # print(pred_dir)
-        # print(base_name)
-        mask_path = os.path.join(pred_dir, f"{base_name}_mask.png")
-        mask = imageio.imread(mask_path)
-        if mask is None:
-            print(f"[ERROR] Cannot read mask: {mask_path}")
-            return 0, 0, 0, 0
-        mask = (mask >= 128).astype(np.uint8)
-
-        # --- Load predictions: pick the last iterative of each samples ---
-        final_preds = []
-        for s in range(samples):
-            last_iter = iterative - 1  # last iterative
-            pred_filename = f"{base_name}_sample_{s}_iter{last_iter}.png"
-            pred_path = os.path.join(pred_dir, pred_filename)
-            pred_img = imageio.imread(pred_path)
-
-            if pred_img is None:
-                print(f"[ERROR] Cannot read prediction: {pred_path}")
-                return 0, 0, 0, 0
-
-            pred_img = pred_img.astype(np.float32) / 255.0
-            final_preds.append(pred_img)
+        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
 
         # --- Average samples ---
         pred = np.mean(final_preds, axis=0)
@@ -46,6 +52,26 @@ def segmentation_evaluate_single_image(args):
         else:
             corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5, slack=5)
         return corr, comp, qual, f1
+
+    except Exception as e:
+        print(f"[ERROR] Exception while processing {image_name}: {e}")
+        return 0, 0, 0, 0
+
+def uncertainty_evaluate_single_image(args):
+    image_name, iterative, samples, pred_dir = args
+    try:
+        base_name = os.path.splitext(os.path.basename(image_name))[0]
+        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
+
+        pred = np.mean(final_preds, axis=0)
+
+        var_unc = get_uncertainty_by_var(final_preds, axis=0, num_rows=2, num_cols=2)
+        std_unc = get_uncertainty_by_std(final_preds, axis=0, num_rows=2, num_cols=2)
+
+        abs_err = get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
+        mse_err = get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
+
+        return var_unc, std_unc, abs_err, mse_err
 
     except Exception as e:
         print(f"[ERROR] Exception while processing {image_name}: {e}")
@@ -102,3 +128,96 @@ def segmentation_evaluation(
         ])
 
     print(f"\n✅ Results saved to: {save_file}")
+
+def uncertainty_evaluation(
+        data_wrapper, 
+        iterative: int, 
+        samples: int, 
+        pred_dir: str, 
+        save_path: str, 
+        num_workers: int):
+    
+    var_uncertainties = []
+    std_uncertainties = []
+    abs_errors = []
+    mse_errors = []
+
+    num_images = len(data_wrapper.image_files)
+    args_list = [(img, iterative, samples, pred_dir) for img in data_wrapper.image_files]
+
+    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+        results = list(tqdm(executor.map(uncertainty_evaluate_single_image, args_list), total=num_images))
+
+    for var_unc, std_unc, abs_err, mse_err in results:
+        var_uncertainties += var_unc
+        std_uncertainties += std_unc
+
+        abs_errors += abs_err
+        mse_errors += mse_err
+
+    var_uncertainties = np.array(var_uncertainties)
+    std_uncertainties = np.array(std_uncertainties)
+    abs_errors = np.array(abs_errors)
+    mse_errors = np.array(mse_errors)
+
+    print("Std vs abs")
+    print("Corr", corr(std_uncertainties, abs_errors))
+    print("rAULR", rAULC(std_uncertainties, abs_errors))
+    print("-----------------------------")
+
+    
+    print("Std vs mse")
+    print("Corr", corr(std_uncertainties, mse_errors))
+    print("rAULR", rAULC(std_uncertainties, mse_errors))
+    print("-----------------------------")
+
+
+    print("Var vs abs")
+    print("Corr", corr(var_uncertainties, abs_errors))
+    print("rAULR", rAULC(var_uncertainties, abs_errors))
+    print("-----------------------------")
+
+
+    print("Var vs mse")
+    print("Corr", corr(var_uncertainties, mse_errors))
+    print("rAULR", rAULC(var_uncertainties, mse_errors))
+    print("-----------------------------")
+
+    results = [
+        {
+            "Metric": "Std vs abs",
+            "Corr": corr(std_uncertainties, abs_errors),
+            "rAULR": rAULC(std_uncertainties, abs_errors)
+        },
+        {
+            "Metric": "Std vs mse",
+            "Corr": corr(std_uncertainties, mse_errors),
+            "rAULR": rAULC(std_uncertainties, mse_errors)
+        },
+        {
+            "Metric": "Var vs abs",
+            "Corr": corr(var_uncertainties, abs_errors),
+            "rAULR": rAULC(var_uncertainties, abs_errors)
+        },
+        {
+            "Metric": "Var vs mse",
+            "Corr": corr(var_uncertainties, mse_errors),
+            "rAULR": rAULC(var_uncertainties, mse_errors)
+        }
+    ]
+
+    # Chuyển thành DataFrame và lưu CSV
+    df = pd.DataFrame(results)
+    df.to_csv(os.path.join(save_path, "uncertainty_result.csv"), index=False)
+
+    plot_pairs = [
+        (std_uncertainties, abs_errors, "Std vs Abs", "std_vs_abs.png"),
+        (std_uncertainties, mse_errors, "Std vs MSE", "std_vs_mse.png"),
+        (var_uncertainties, abs_errors, "Var vs Abs", "var_vs_abs.png"),
+        (var_uncertainties, mse_errors, "Var vs MSE", "var_vs_mse.png")
+    ]
+
+    for x, y, title, filename in plot_pairs:
+        plot_corr_rAULC(x, y, title, filename, save_path)
+
+    print("All plots saved to folder.")
