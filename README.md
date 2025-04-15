@@ -21,3 +21,14 @@ python train.py \
 # Predict
 
 # Eval
+python predict.py \
+  --dataset RT \
+  --dataset_path /home/ltnghia02/MEDICAL_ITERATIVE/dataset/RTdata_Crop_1024 \
+  --model_path /home/ltnghia02/MEDICAL_ITERATIVE/checkpoints/RT_iter \
+  --save_path /home/ltnghia02/MEDICAL_ITERATIVE/predictions/RT_iter \
+  --epoch 10 \
+  --batch_size 2 \
+  --training_mode \
+  --iterative 3 \
+  --samples 5 \
+  --gpus 6,7

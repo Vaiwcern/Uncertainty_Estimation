@@ -46,7 +46,7 @@ def train(
             optimizer=optim,
             loss=loss,
             metrics=[
-                'accuracy',
+                tf.keras.metrics.BinaryAccuracy(name='acc'),
                 IoUMetric(threshold=0.5),
                 F1ScoreMetric(threshold=0.5),
             ]
@@ -56,8 +56,9 @@ def train(
         train_dataset,  
         epochs=num_epoch,
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
+        verbose=1,
         callbacks=[
-            CustomCallbacks.PrintLossCallback(),
+            # CustomCallbacks.PrintLossCallback(),
             CustomCallbacks.SaveEveryNEpoch(save_path=save_path, interval=save_per_epoch)
         ]
     )
