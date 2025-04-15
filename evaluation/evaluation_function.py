@@ -29,7 +29,7 @@ def load_model_from_folder(folder_path: str, epoch: int):
     config = load_yaml_config(setting_path)
 
     # 2. Extract required model settings
-    required_keys = ["model", "image_channel", "dropout_rate", "use_batchnorm"]
+    required_keys = ["model", "image_channel", "dropout_rate", "use_batchnorm", "add_channel"]
 
     for key in required_keys:
         if key not in config:
@@ -40,9 +40,10 @@ def load_model_from_folder(folder_path: str, epoch: int):
     image_channel = config["image_channel"]
     dropout_rate = config["dropout_rate"]
     use_batchnorm = config["use_batchnorm"]
+    add_channel = config["add_channel"]
 
     # 3. Build model
-    input_channels = image_channel + (1 if model_type == 'iterative' else 0)
+    input_channels = image_channel + (1 if add_channel else 0)
     if model_type == "iterative":
         model = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
     elif model_type == "vanila":
@@ -69,7 +70,7 @@ def load_model_from_folder(folder_path: str, epoch: int):
     print()
     print("========== Model Config ==========")
     print(f"Model type     : {model_type}")
-    print(f"Image channels : {image_channel}")
+    print(f"Input channels : {input_channels}")
     print(f"Dropout rate   : {dropout_rate}")
     print(f"Use BatchNorm  : {use_batchnorm}")
     print("==================================")
