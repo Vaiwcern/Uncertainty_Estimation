@@ -4,9 +4,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import tensorflow as tf
 import keras
+from tensorflow.keras import mixed_precision
 
 from model.unet import IterativeUnet, VanilaUnet
 from training_utils import CustomCallbacks, CustomLosses
+from evaluation.metric import IoUMetric, F1ScoreMetric
+
 
 def train(
     model: str,
@@ -35,21 +38,19 @@ def train(
             myModel = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
         elif model == "vanila": 
             myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
+        
         optim = keras.optimizers.Adam(learning_rate=learning_rate)
+        optim = mixed_precision.LossScaleOptimizer(optim)
+
         myModel.compile(
             optimizer=optim,
             loss=loss,
             metrics=[
                 'accuracy',
+                IoUMetric(threshold=0.5),
+                F1ScoreMetric(threshold=0.5),
             ]
         )
-
-    # if model == "iterative": 
-    #     myModel = IterativeUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
-    # elif model == "vanila": 
-    #     myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
-    # for layer in myModel.layers:
-    #     print(layer.name, layer.dtype, layer.compute_dtype)
 
     myModel.fit(
         train_dataset,  

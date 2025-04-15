@@ -7,7 +7,7 @@ mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 
-from evaluation_function import predict_and_save_results
+from predict_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController
 
 def parse_args(): 
@@ -23,7 +23,7 @@ def parse_args():
         help="Path to the directory where checkpoint saved.")
 
     parser.add_argument('--save_path', type=str, required=True,
-        help="Path to the directory where checkpoint saved.")
+        help="Path to the directory where predictions would be saved.")
     
     parser.add_argument('--epoch', type=int, required=True,
         help="The epoch of the checkpoint want to load.")

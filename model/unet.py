@@ -121,15 +121,21 @@ class IterativeUnet(tf.keras.Model):
                 total_loss += loss
                 zero_channel = y_pred
                 zero_channel = tf.cast(zero_channel, tf.float16)  
-            return total_loss / 3.0
+            return total_loss / 3.0, y_pred
 
         with tf.GradientTape() as tape:
-            loss = iterative_forward(x, zero_channel, y)
+            loss, y_pred = iterative_forward(x, zero_channel, y)
+            scaled_loss = self.optimizer.get_scaled_loss(loss)
 
-        gradients = tape.gradient(loss, self.trainable_variables)
+        scaled_gradients = tape.gradient(scaled_loss, self.trainable_variables)
+        gradients = self.optimizer.get_unscaled_gradients(scaled_gradients)
         self.optimizer.apply_gradients(zip(gradients, self.trainable_variables))
 
-        return {"loss": loss}
+        self.compiled_metrics.update_state(y, y_pred)
+        metrics = {m.name: m.result() for m in self.metrics}
+        metrics["loss"] = loss
+
+        return metrics
     
     def build(self, input_shape):
         dummy = tf.zeros(input_shape, dtype=tf.float16)
