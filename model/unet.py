@@ -131,6 +131,11 @@ class IterativeUnet(tf.keras.Model):
 
         return {"loss": loss}
     
+    def build(self, input_shape):
+        dummy = tf.zeros(input_shape, dtype=tf.float16)
+        self.call(dummy)
+        super().build(input_shape)
+
 class VanilaUnet(tf.keras.Model):
     def __init__(self, input_channels=3, dropout_rate=0.5, use_batchnorm=True):
         super(VanilaUnet, self).__init__()

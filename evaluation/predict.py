@@ -5,14 +5,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from tensorflow.keras import mixed_precision
 mixed_precision.set_global_policy("mixed_float16")
 import argparse
-import numpy as np
-import tensorflow as tf
-from pathlib import Path
-from tqdm import tqdm
-import imageio.v3 as imageio
 from datetime import datetime
 
-from evaluation_function import predict_and_save_results, load_data_wrapper_from_folder
+from evaluation_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController
 
 def parse_args(): 
@@ -33,20 +28,20 @@ def parse_args():
     parser.add_argument('--epoch', type=int, required=True,
         help="The epoch of the checkpoint want to load.")
 
+    parser.add_argument('--training_mode', action='store_true',
+        help="Enable training mode during prediction (dropout, BN). Default: False")
+    
     parser.add_argument('--batch_size', type=int, required=True,
-        help="")
-
-    parser.add_argument('--training_mode', action='store_true', required=True,
-        help="")
+        help="Batch size for prediction (per step).")
 
     parser.add_argument('--iterative', type=int, required=True,
-        help="")
+        help="Number of iterative passes for each sample.")
 
     parser.add_argument('--samples', type=int, required=True,
-        help="")
-
+        help="Number of stochastic samples per input (e.g., for MC dropout).")
+    
     parser.add_argument('--gpus', type=str, required=True,
-        help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
+            help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
 
     return parser.parse_args()
 
@@ -69,17 +64,16 @@ if __name__ == "__main__":
     sys.stdout = log_file
     sys.stderr = log_file
 
-    print(f"Predicting dataset {args.dataset} at {args.dataset_path}")
 
     # === Load Dataset ===
     if args.dataset == "RT":
-        data_wrapper = DatasetController.get_roadtracer_train_wrapper(
+        data_wrapper = DatasetController.get_roadtracer_test_wrapper(
             dataset_path=args.dataset_path,
             batch_size=args.batch_size,
             add_channel=False,
         )
     elif args.dataset == "Mass":
-        data_wrapper = DatasetController.get_massachusetts_train_wrapper(
+        data_wrapper = DatasetController.get_massachusetts_test_wrapper(
             dataset_path=args.dataset_path,
             batch_size=args.batch_size,
             add_channel=False,
