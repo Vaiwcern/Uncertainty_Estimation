@@ -14,26 +14,27 @@ class IoUMetric(tf.keras.metrics.Metric):
     def update_state(self, y_true, y_pred, sample_weight=None):
         y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
         y_true = tf.cast(y_true, tf.float32)
+
         inter = tf.reduce_sum(y_true * y_pred_bin)
-        uni = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred_bin) - inter
+        union = tf.reduce_sum(y_true) + tf.reduce_sum(y_pred_bin) - inter
+
         self.intersection.assign_add(inter)
-        self.union.assign_add(uni)
+        self.union.assign_add(union)
 
     def result(self):
-        return self.intersection / (self.union + 1e-7)
+        return tf.math.divide_no_nan(self.intersection, self.union + tf.keras.backend.epsilon())
 
     def reset_states(self):
         self.intersection.assign(0.0)
         self.union.assign(0.0)
 
-
-
 class F1ScoreMetric(tf.keras.metrics.Metric):
-    def __init__(self, name='f1_score', threshold=0.5, **kwargs):
-        super(F1ScoreMetric, self).__init__(name=name, **kwargs)
+    def __init__(self, name='f1', threshold=0.5, **kwargs):
+        super().__init__(name=name, **kwargs)
         self.threshold = threshold
-        self.f1_acc = self.add_weight(name='f1_acc', initializer='zeros')
-        self.count = self.add_weight(name='count', initializer='zeros')
+        self.tp = self.add_weight(name='tp', initializer='zeros')
+        self.fp = self.add_weight(name='fp', initializer='zeros')
+        self.fn = self.add_weight(name='fn', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
         y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
@@ -43,27 +44,28 @@ class F1ScoreMetric(tf.keras.metrics.Metric):
         fp = tf.reduce_sum((1 - y_true) * y_pred_bin)
         fn = tf.reduce_sum(y_true * (1 - y_pred_bin))
 
-        precision = tp / (tp + fp + K.epsilon())
-        recall = tp / (tp + fn + K.epsilon())
-
-        f1 = 2 * (precision * recall) / (precision + recall + K.epsilon())
-
-        self.f1_acc.assign_add(f1)
-        self.count.assign_add(1.0)
+        self.tp.assign_add(tp)
+        self.fp.assign_add(fp)
+        self.fn.assign_add(fn)
 
     def result(self):
-        return self.f1_acc / self.count
+        precision = tf.math.divide_no_nan(self.tp, self.tp + self.fp + tf.keras.backend.epsilon())
+        recall = tf.math.divide_no_nan(self.tp, self.tp + self.fn + tf.keras.backend.epsilon())
+        f1 = tf.math.divide_no_nan(2 * precision * recall, precision + recall + tf.keras.backend.epsilon())
+        return f1
 
     def reset_states(self):
-        self.f1_acc.assign(0.0)
-        self.count.assign(0.0)
+        self.tp.assign(0.0)
+        self.fp.assign(0.0)
+        self.fn.assign(0.0)
+
 
 def min_max_normalize(array: np.ndarray) -> np.ndarray:
     min_val = np.min(array)
     max_val = np.max(array)
     
     if max_val == min_val:
-        return np.zeros_like(array)  # Tránh chia cho 0, mọi phần tử giống nhau → trả về 0
+        return np.zeros_like(array)  
     
     return (array - min_val) / (max_val - min_val)
 
