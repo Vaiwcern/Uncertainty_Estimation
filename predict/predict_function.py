@@ -134,12 +134,13 @@ def build_distributed_predict_step(model, strategy, training=False, iterative=1,
             # tf.print("🔥 Replica shape:", tf.shape(images), "Batch size:", batch_size)
             # images = tf.identity(images)  # để giữ node
 
-            images = tf.cast(images, tf.float16)  # Mixed precision
+            # images = tf.cast(images, tf.float16)  # Mixed precision
             result_array = tf.TensorArray(dtype=tf.float32, size=samples)
 
             for s in tf.range(samples):
                 iter_array = tf.TensorArray(dtype=tf.float32, size=iterative)
-                zero_channel = tf.zeros_like(images[..., :1], dtype=tf.float16)
+                zero_channel = tf.zeros_like(images[..., :1], dtype=tf.float32)
+                # zero_channel = tf.cast(zero_channel, tf.float16)
 
                 for i in tf.range(iterative):
                     if iterative > 1:
@@ -147,11 +148,14 @@ def build_distributed_predict_step(model, strategy, training=False, iterative=1,
                     else:
                         input_images = images
 
+                    tf.print("[DEBUG] Training mode:", training)
                     y_pred = model(input_images, training=training)
+                    # tf.print("[DEBUG] y_pred min:", tf.reduce_min(y_pred), "max:", tf.reduce_max(y_pred))
                     iter_array = iter_array.write(i, tf.cast(y_pred, tf.float32))
 
                     if iterative > 1:
-                        zero_channel = tf.cast(y_pred, tf.float16)
+                        zero_channel = y_pred
+                        # zero_channel = tf.cast(zero_channel, tf.float16)
 
                 iter_stack = tf.transpose(iter_array.stack(), [1, 0, 2, 3, 4])
                 result_array = result_array.write(s, iter_stack)

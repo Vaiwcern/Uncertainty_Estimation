@@ -8,7 +8,7 @@ import pandas as pd
 
 from metric import compute_ccq, compute_ccq_normal, corr, rAULC
 from metric import get_uncertainty_by_var, get_uncertainty_by_std
-from metric import get_error_by_abs, get_error_by_mse
+from metric import get_error_by_abs, get_error_by_mse, compute_ece
 
 from plot import plot_corr_rAULC
 
@@ -18,24 +18,30 @@ def get_pred_n_mask(base_name, pred_dir, iterative, samples):
     mask = imageio.imread(mask_path)
     if mask is None:
         print(f"[ERROR] Cannot read mask: {mask_path}")
-        return 0, 0, 0, 0
+        return 0, 0
+
     mask = (mask >= 128).astype(np.uint8)
 
-    # --- Load predictions: pick the last iterative of each samples ---
-    final_preds = []
+    # --- Load all predictions: all iterations for each sample ---
+    final_preds = []  # shape: [samples, iterative, H, W]
     for s in range(samples):
-        last_iter = iterative - 1  # last iterative
-        pred_filename = f"{base_name}_sample_{s}_iter{last_iter}.png"
-        pred_path = os.path.join(pred_dir, pred_filename)
-        pred_img = imageio.imread(pred_path)
+        sample_preds = []
+        for it in range(iterative):
+            pred_filename = f"{base_name}_sample_{s}_iter{it}.png"
+            pred_path = os.path.join(pred_dir, pred_filename)
 
-        if pred_img is None:
-            print(f"[ERROR] Cannot read prediction: {pred_path}")
-            return 0, 0, 0, 0
+            if not os.path.exists(pred_path):
+                print(f"[ERROR] Missing prediction: {pred_path}")
+                return 0, 0
 
-        pred_img = pred_img.astype(np.float32) / 255.0
-        final_preds.append(pred_img)
+            pred_img = imageio.imread(pred_path).astype(np.float32) / 255.0
+            sample_preds.append(pred_img)
+
+        final_preds.append(sample_preds)
+
+    final_preds = np.array(final_preds, dtype=np.float32)  # shape: [samples, iterative, H, W]
     return final_preds, mask
+
 
 def segmentation_evaluate_single_image(args):
     image_name, iterative, samples, pred_dir, relax = args
@@ -43,8 +49,9 @@ def segmentation_evaluate_single_image(args):
         base_name = os.path.splitext(os.path.basename(image_name))[0]
         final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
 
-        # --- Average samples ---
-        pred = np.mean(final_preds, axis=0)
+        # --- Average samples at the last iteration ---
+        last_iter = iterative - 1
+        pred = np.mean(final_preds[:, last_iter, :, :], axis=0)
 
         # --- Compute metrics ---
         if relax:
@@ -63,10 +70,23 @@ def uncertainty_evaluate_single_image(args):
         base_name = os.path.splitext(os.path.basename(image_name))[0]
         final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
 
-        pred = np.mean(final_preds, axis=0)
+        # --- Warning if samples duplicate
+        for i in range(samples):
+            for j in range(i + 1, samples):
+                if np.array_equal(final_preds[i], final_preds[j]):
+                    print(f"⚠️ Warning: sample {i} và sample {j} giống hệt nhau!")
 
-        var_unc = get_uncertainty_by_var(final_preds, axis=0, num_rows=2, num_cols=2)
-        std_unc = get_uncertainty_by_std(final_preds, axis=0, num_rows=2, num_cols=2)
+        # --- Average samples at the last iteration ---
+        last_iter = iterative - 1
+        pred = np.mean(final_preds[:, last_iter, :, :], axis=0)
+
+        if final_preds.shape[0] == 1:
+            preds = final_preds[0, :, :, :]  # shape: (iterative, H, W)
+        else:
+            preds = final_preds[:, last_iter, :, :]  # shape: (samples, H, W)
+
+        var_unc = get_uncertainty_by_var(preds, axis=0, num_rows=2, num_cols=2)
+        std_unc = get_uncertainty_by_std(preds, axis=0, num_rows=2, num_cols=2)
 
         abs_err = get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
         mse_err = get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
@@ -160,49 +180,63 @@ def uncertainty_evaluation(
     abs_errors = np.array(abs_errors)
     mse_errors = np.array(mse_errors)
 
+    print("var_uncertainty", var_uncertainties)
+    print("std_uncertainty", std_uncertainties)
+    print("abs_errors", abs_errors)
+    print("mse_errors", mse_errors)
+
+
     print("Std vs abs")
     print("Corr", corr(std_uncertainties, abs_errors))
-    print("rAULR", rAULC(std_uncertainties, abs_errors))
+    print("rAULC", rAULC(std_uncertainties, abs_errors))
+    print("ECE", compute_ece(std_uncertainties, abs_errors))
     print("-----------------------------")
 
     
     print("Std vs mse")
     print("Corr", corr(std_uncertainties, mse_errors))
-    print("rAULR", rAULC(std_uncertainties, mse_errors))
+    print("rAULC", rAULC(std_uncertainties, mse_errors))
+    print("ECE", compute_ece(std_uncertainties, mse_errors))
     print("-----------------------------")
 
 
     print("Var vs abs")
     print("Corr", corr(var_uncertainties, abs_errors))
-    print("rAULR", rAULC(var_uncertainties, abs_errors))
+    print("rAULC", rAULC(var_uncertainties, abs_errors))
+    print("ECE", compute_ece(var_uncertainties, abs_errors))
     print("-----------------------------")
 
 
     print("Var vs mse")
     print("Corr", corr(var_uncertainties, mse_errors))
     print("rAULR", rAULC(var_uncertainties, mse_errors))
+    print("ECE", compute_ece(var_uncertainties, mse_errors))
     print("-----------------------------")
 
     results = [
         {
             "Metric": "Std vs abs",
             "Corr": corr(std_uncertainties, abs_errors),
-            "rAULR": rAULC(std_uncertainties, abs_errors)
+            "rAULR": rAULC(std_uncertainties, abs_errors),
+            "ECE": compute_ece(std_uncertainties, abs_errors)
         },
         {
             "Metric": "Std vs mse",
             "Corr": corr(std_uncertainties, mse_errors),
-            "rAULR": rAULC(std_uncertainties, mse_errors)
+            "rAULR": rAULC(std_uncertainties, mse_errors),
+            "ECE": compute_ece(std_uncertainties, mse_errors)
         },
         {
             "Metric": "Var vs abs",
             "Corr": corr(var_uncertainties, abs_errors),
-            "rAULR": rAULC(var_uncertainties, abs_errors)
+            "rAULR": rAULC(var_uncertainties, abs_errors),
+            "ECE": compute_ece(var_uncertainties, abs_errors)
         },
         {
             "Metric": "Var vs mse",
             "Corr": corr(var_uncertainties, mse_errors),
-            "rAULR": rAULC(var_uncertainties, mse_errors)
+            "rAULR": rAULC(var_uncertainties, mse_errors),
+            "ECE": compute_ece(var_uncertainties, mse_errors)
         }
     ]
 

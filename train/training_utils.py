@@ -56,3 +56,42 @@ class CustomLosses:
             iou = (intersection + smooth) / (union + smooth)
             return 1.0 - tf.reduce_mean(iou)
         return loss
+
+    @staticmethod
+    def binary_crossentropy_loss():
+        def loss(y_true, y_pred):
+            y_true = tf.cast(y_true, tf.float32)
+            y_pred = tf.cast(y_pred, tf.float32)
+            return tf.reduce_mean(tf.keras.losses.binary_crossentropy(y_true, y_pred))
+        return loss
+
+    @staticmethod
+    def dice_loss(smooth=1e-6):
+        def loss(y_true, y_pred):
+            y_true_f = tf.keras.backend.flatten(tf.cast(y_true, tf.float32))
+            y_pred_f = tf.keras.backend.flatten(tf.cast(y_pred, tf.float32))
+
+            intersection = tf.reduce_sum(y_true_f * y_pred_f)
+            dice = (2. * intersection + smooth) / \
+                   (tf.reduce_sum(y_true_f) + tf.reduce_sum(y_pred_f) + smooth)
+            return 1.0 - dice
+        return loss
+
+    @staticmethod
+    def dice_bce_loss(smooth=1e-6):
+        def loss(y_true, y_pred):
+            dice = CustomLosses.dice_loss(smooth)(y_true, y_pred)
+            bce = tf.reduce_mean(
+                tf.keras.losses.binary_crossentropy(y_true, y_pred)
+            )
+            return dice + bce
+        return loss
+
+    @staticmethod
+    def dice_focal_loss(smooth=1e-6, gamma=2.0, alpha=0.25):
+        def loss(y_true, y_pred):
+            dice = CustomLosses.dice_loss(smooth)(y_true, y_pred)
+            focal = CustomLosses.focal_loss(gamma, alpha)(y_true, y_pred)
+            return dice + focal
+        return loss
+

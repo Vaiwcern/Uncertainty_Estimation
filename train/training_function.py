@@ -4,7 +4,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import tensorflow as tf
 import keras
-from tensorflow.keras import mixed_precision
+# from tensorflow.keras import mixed_precision
 
 from model.unet import IterativeUnet, VanilaUnet
 from training_utils import CustomCallbacks, CustomLosses
@@ -32,6 +32,16 @@ def train(
 
     if loss_function == 'focal': 
         loss = CustomLosses.focal_loss()
+    elif loss_function == 'BCE': 
+        loss = CustomLosses.binary_crossentropy_loss()
+    elif loss_function == 'dice': 
+        loss = CustomLosses.dice_loss()
+    elif loss_function == 'dice_bce': 
+        loss = CustomLosses.dice_bce_loss()
+    elif loss_function == 'dice_focal': 
+        loss = CustomLosses.dice_focal_loss()
+    else: 
+        raise ValueError("Loss function not supported.")
 
     with strategy.scope():
         if model == "iterative": 
@@ -40,7 +50,7 @@ def train(
             myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
         
         optim = keras.optimizers.Adam(learning_rate=learning_rate)
-        optim = mixed_precision.LossScaleOptimizer(optim)
+        # optim = mixed_precision.LossScaleOptimizer(optim)
 
         myModel.compile(
             optimizer=optim,
@@ -51,6 +61,14 @@ def train(
                 F1ScoreMetric(threshold=0.5),
             ]
         )
+
+    for layer in myModel.layers:
+        if isinstance(layer, tf.keras.Model) or isinstance(layer, tf.keras.Sequential):
+            for sub_layer in layer.layers:
+                if isinstance(sub_layer, tf.keras.layers.BatchNormalization):
+                    print(f"Found BN layer: {sub_layer.name}")
+        elif isinstance(layer, tf.keras.layers.BatchNormalization):
+            print(f"Found BN layer: {layer.name}")
 
     myModel.fit(
         train_dataset,  

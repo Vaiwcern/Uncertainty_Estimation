@@ -1,0 +1,14 @@
+dataset: RT
+dataset_path: /home/ltnghia02/MEDICAL_ITERATIVE/dataset/RTdata_Crop_1024
+save_path: /home/ltnghia02/MEDICAL_ITERATIVE/source/results/RT_iter
+prediction_path: /home/ltnghia02/MEDICAL_ITERATIVE/predictions/RT_iter
+iterative: 3
+samples: 5
+eval_type: uncertainty
+ood_dataset: null
+ood_dataset_path: null
+relaxed_ccq: false
+n_rows: 2
+n_cols: 2
+gpus: '4'
+num_workers: 64

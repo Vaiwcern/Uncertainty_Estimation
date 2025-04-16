@@ -6,6 +6,7 @@ from tensorflow.keras import mixed_precision
 mixed_precision.set_global_policy("mixed_float16")
 
 import argparse
+import yaml
 
 from custom_dataset.DatasetController import DatasetController
 from evaluation_function import segmentation_evaluation, uncertainty_evaluation
@@ -76,6 +77,13 @@ if __name__ == "__main__":
     # === Set devices ===
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
 
+
+    # === Log setting ===
+    os.makedirs(args.save_path, exist_ok=True)
+    setting_log_path = os.path.join(args.save_path, f"setting_{args.eval_type}.yaml")
+
+    with open(setting_log_path, "w") as f:
+        yaml.dump(vars(args), f, sort_keys=False)
 
     # === Load Dataset ===
     if args.dataset == "RT":

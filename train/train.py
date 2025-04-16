@@ -2,9 +2,8 @@ import os
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-
-from tensorflow.keras import mixed_precision
-mixed_precision.set_global_policy("mixed_float16")
+# from tensorflow.keras import mixed_precision
+# mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 import yaml

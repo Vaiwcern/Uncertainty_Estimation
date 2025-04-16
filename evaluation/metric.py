@@ -126,21 +126,24 @@ def compute_ccq_normal(pred_score, gt_mask, threshold=0.5):
     return corr, comp, qual, f1
 
 
-def AULC(uncs, error):
+def AULC(uncs, error, eps=1e-12):
     idxs = np.argsort(uncs)
-    uncs_s = uncs[idxs]
     error_s = error[idxs]
     mean_error = error_s.mean()
+
+    if np.all(error_s < eps):
+        return 1.0
+
     error_csum = np.cumsum(error_s)
-    Fs = error_csum / np.arange(1, len(error_s) + 1)
-    Fs = mean_error / (Fs)
-    s = 1 / len(Fs)
+    Fs = error_csum / (np.arange(1, len(error_s) + 1) + eps)
+    Fs = mean_error / (Fs + eps)
+    s = 1.0 / len(Fs)
     return -1 + s * Fs.sum()
 
-def rAULC(uncs, error):
-    perf_aulc = AULC(error, error)
-    curr_aulc = AULC(uncs, error)
-    return curr_aulc / perf_aulc
+def rAULC(uncs, error, eps=1e-12):
+    perf_aulc = AULC(error, error, eps)
+    curr_aulc = AULC(uncs, error, eps)
+    return curr_aulc / (perf_aulc + eps)
 
 def corr(uncs, error): 
     if np.std(uncs) == 0 or np.std(error) == 0:
@@ -203,3 +206,41 @@ def cal_pr_auc(labels, uncertainties):
     precision, recall, thresholds = sklearn.metrics.precision_recall_curve(labels, uncertainties)
     pr_auc = sklearn.metrics.auc(recall, precision)
     return pr_auc
+
+def compute_ece(unc, mse, n_bins=40):
+    """
+    Compute the Expected Calibration Error for a regression task.
+
+    Args:
+    unc (numpy.array): Array of predicted uncertainties.
+    mse (numpy.array): Array of mean squared errors.
+    n_bins (int): Number of bins to use for calibration.
+
+    Returns:
+    float: The ECE value.
+    """
+
+    # Ensure unc and mse are numpy arrays
+    unc = np.array(unc)
+    mse = np.array(mse)
+
+    # Create bins based on the predicted uncertainties
+    bin_edges = np.linspace(0, np.max(unc), n_bins + 1)
+    bin_lowers = bin_edges[:-1]
+    bin_uppers = bin_edges[1:]
+
+    ece = 0.0
+    for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
+        # Find indices of samples in each bin
+        in_bin = (unc >= bin_lower) & (unc < bin_upper)
+        bin_count = np.sum(in_bin)
+
+        if bin_count > 0:
+            # Average uncertainty in bin
+            avg_uncertainty = np.mean(unc[in_bin])
+            # Average error in bin
+            avg_error = np.mean(mse[in_bin])
+            # Weighted absolute difference
+            ece += np.abs(avg_uncertainty - avg_error) * (bin_count / len(unc))
+
+    return ece

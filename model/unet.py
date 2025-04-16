@@ -107,7 +107,7 @@ class IterativeUnet(tf.keras.Model):
     def train_step(self, data):
         x, y = data
         x = x[..., :3]
-        x = tf.cast(x, tf.float16)
+        # x = tf.cast(x, tf.float16)
 
         zero_channel = tf.zeros_like(x[..., :1])
         zero_channel = tf.cast(zero_channel, tf.float16)  
@@ -120,7 +120,7 @@ class IterativeUnet(tf.keras.Model):
                 loss = self.compute_loss(y=y, y_pred=y_pred)
                 total_loss += loss
                 zero_channel = y_pred
-                zero_channel = tf.cast(zero_channel, tf.float16)  
+                # zero_channel = tf.cast(zero_channel, tf.float16)  
             return total_loss / 3.0, y_pred
 
         with tf.GradientTape() as tape:
@@ -139,7 +139,8 @@ class IterativeUnet(tf.keras.Model):
         return metrics
     
     def build(self, input_shape):
-        dummy = tf.zeros(input_shape, dtype=tf.float16)
+        dummy = tf.zeros(input_shape, dtype=tf.float32)
+        # dummy = tf.cast(dummy, tf.float16)
         self.call(dummy)
         super().build(input_shape)
 

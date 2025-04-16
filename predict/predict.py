@@ -6,6 +6,7 @@ from tensorflow.keras import mixed_precision
 mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
+import yaml
 
 from predict_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController
@@ -51,6 +52,14 @@ if __name__ == "__main__":
 
     # === Set devices ===
     os.environ["CUDA_VISIBLE_DEVICES"] = args.gpus
+
+
+    # === Log setting ===
+    os.makedirs(args.save_path, exist_ok=True)
+    setting_log_path = os.path.join(args.save_path, "setting.yaml")
+
+    with open(setting_log_path, "w") as f:
+        yaml.dump(vars(args), f, sort_keys=False)
 
 
     # === Log predicting process ===
