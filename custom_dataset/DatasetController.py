@@ -73,7 +73,7 @@ class DatasetController:
         train_data_wrapper = DRIVEDatasetTF(
             dataset_dir=dataset_path,
             batch_size=batch_size,       
-            split='training',
+            train=True,
             add_channel=add_channel,          
             normalize=True,
             buffer_size=buffer_size
@@ -89,7 +89,7 @@ class DatasetController:
         test_data_wrapper = DRIVEDatasetTF(
             dataset_dir=dataset_path,
             batch_size=batch_size,       
-            split='test',
+            train=False,
             add_channel=add_channel,          
             normalize=True,
         )

@@ -18,7 +18,7 @@ def parse_args():
         help="Model type. Options: 'iterative' or 'vanila'.")
 
     parser.add_argument('--dataset', type=str, required=True,
-        help="Name of the dataset to be used. Options: 'RT' or 'Mass'.")
+        help="Name of the dataset to be used. Options: 'RT', 'Mass' or 'Drive'.")
 
     parser.add_argument('--dataset_path', type=str, required=True,
         help="Path to the dataset directory.")
@@ -102,6 +102,13 @@ if __name__ == "__main__":
         )
     elif args.dataset == "Mass":
         data_wrapper = DatasetController.get_massachusetts_train_wrapper(
+            dataset_path=args.dataset_path,
+            batch_size=args.batch_size,
+            add_channel=args.add_channel,
+            buffer_size = args.buffer_size
+        )
+    elif args.dataset == "Drive": 
+        data_wrapper = DatasetController.get_drive_train_wrapper(
             dataset_path=args.dataset_path,
             batch_size=args.batch_size,
             add_channel=args.add_channel,
