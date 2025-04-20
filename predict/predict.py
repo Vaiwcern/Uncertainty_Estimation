@@ -1,15 +1,11 @@
 import os
-os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
+# os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# from tensorflow.keras import mixed_precision
-# mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 import yaml
-from tensorflow.keras import mixed_precision
-print("⚠️ Mixed precision policy:", mixed_precision.global_policy())
 
 from predict_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController

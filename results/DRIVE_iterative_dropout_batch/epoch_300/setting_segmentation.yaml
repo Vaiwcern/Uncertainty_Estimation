@@ -1,0 +1,14 @@
+dataset: Drive
+dataset_path: /home/ltnghia02/MEDICAL_ITERATIVE/dataset/DRIVE
+save_path: /home/ltnghia02/MEDICAL_ITERATIVE/source/results/DRIVE_iterative_dropout_batch/epoch_300
+prediction_path: /home/ltnghia02/MEDICAL_ITERATIVE/predictions/DRIVE_iterative_dropout_batch/epoch_300
+iterative: 3
+samples: 5
+eval_type: segmentation
+ood_dataset: null
+ood_dataset_path: null
+relaxed_ccq: false
+n_rows: null
+n_cols: null
+gpus: '0'
+num_workers: 4

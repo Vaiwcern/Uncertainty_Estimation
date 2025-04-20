@@ -1,5 +1,5 @@
 import os
-os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
+# os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 

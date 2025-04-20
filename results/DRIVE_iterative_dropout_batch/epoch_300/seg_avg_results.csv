@@ -1,2 +1,2 @@
 Correctness (Precision),Completeness (Recall),Quality (IoU),F1 Score,ROC_AUC,PR_AUC
-0.9488,0.6265,0.6046,0.752,0.988,1
+0.9649,0.5372,0.5263,0.6879,0.9851,1

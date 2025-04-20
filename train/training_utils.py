@@ -31,18 +31,11 @@ class CustomCallbacks:
         def on_epoch_end(self, epoch, logs=None):
             duration = time.time() - self.epoch_start_time
             logs = logs or {}
-            
-            # Chia đôi metric để in 2 dòng
-            items = list(logs.items())
-            mid = len(items) // 2 + len(items) % 2  # phần giữa nếu số lẻ
 
-            line1 = " - ".join([f"{k}: {v:.4f}" for k, v in items[:mid]])
-            line2 = " - ".join([f"{k}: {v:.4f}" for k, v in items[mid:]])
+            metrics_str = ", ".join([f"{k}: {v:.4f}" for k, v in logs.items()])
 
             print(f"\n📊 Epoch {epoch + 1} - ⏱️ {duration:.2f}s")
-            print(f"  🔹 {line1}")
-            if line2:
-                print(f"  🔹 {line2}")
+            print(f"   {metrics_str}")
 
 # def convert_model_to_functional(model, input_shape=(1024, 1024, 4)):
 #     inputs = keras.Input(shape=input_shape)

@@ -3,7 +3,7 @@ import csv
 import numpy as np
 import imageio
 from tqdm import tqdm
-from concurrent.futures import ProcessPoolExecutor
+from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor
 import pandas as pd
 
 from metric import compute_ccq, compute_ccq_normal, corr, rAULC, AUCMetric, PRAUCMetric
@@ -74,40 +74,6 @@ def segmentation_evaluate_single_image(args):
         print(f"[ERROR] Exception while processing {image_name}: {e}")
         return 0, 0, 0, 0
 
-def uncertainty_evaluate_single_image(args):
-    image_name, iterative, samples, pred_dir = args
-    try:
-        base_name = os.path.splitext(os.path.basename(image_name))[0]
-        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
-
-        # --- Warning if samples duplicate
-        for i in range(samples):
-            for j in range(i + 1, samples):
-                if np.array_equal(final_preds[i], final_preds[j]):
-                    print(f"⚠️ Warning: sample {i} và sample {j} giống hệt nhau!")
-
-        # --- Average samples at the last iteration ---
-        last_iter = iterative - 1
-        pred = np.mean(final_preds[:, last_iter, :, :], axis=0)
-
-        if final_preds.shape[0] == 1:
-            preds = final_preds[0, :, :, :]  # shape: (iterative, H, W)
-        else:
-            preds = final_preds[:, last_iter, :, :]  # shape: (samples, H, W)
-
-        var_unc = get_uncertainty_by_var(preds, axis=0, num_rows=2, num_cols=2)
-        std_unc = get_uncertainty_by_std(preds, axis=0, num_rows=2, num_cols=2)
-
-        abs_err = get_error_by_abs(pred, mask, num_rows=2, num_cols=2)
-        mse_err = get_error_by_mse(pred, mask, num_rows=2, num_cols=2)
-
-        return var_unc, std_unc, abs_err, mse_err
-
-    except Exception as e:
-        print(f"[ERROR] Exception while processing {image_name}: {e}")
-        return 0, 0, 0, 0
-
-
 def segmentation_evaluation(
         data_wrapper, 
         iterative: int, 
@@ -127,7 +93,7 @@ def segmentation_evaluation(
     num_images = len(data_wrapper.image_files)
     args_list = [(img, iterative, samples, pred_dir, relax) for img in data_wrapper.image_files]
 
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = list(tqdm(executor.map(segmentation_evaluate_single_image, args_list), total=num_images))
 
     for corr, comp, qual, f1, roc_auc, pr_auc in results:
@@ -164,10 +130,44 @@ def segmentation_evaluation(
             round(quality / num_images, 4),
             round(f1_score / num_images, 4),
             round(roc_auc_all / num_images, 4),
-            round(pr_auc_all / num_images),
+            round(pr_auc_all / num_images, 4),
         ])
 
     print(f"\n✅ Results saved to: {save_file}")
+
+
+def uncertainty_evaluate_single_image(args):
+    image_name, iterative, samples, pred_dir, n_rows, n_cols= args
+    try:
+        base_name = os.path.splitext(os.path.basename(image_name))[0]
+        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
+
+        # --- Warning if samples duplicate
+        for i in range(samples):
+            for j in range(i + 1, samples):
+                if np.array_equal(final_preds[i], final_preds[j]):
+                    print(f"⚠️ Warning: sample {i} và sample {j} giống hệt nhau!")
+
+        # --- Average samples at the last iteration ---
+        last_iter = iterative - 1
+        pred = np.mean(final_preds[:, last_iter, :, :], axis=0)
+
+        if final_preds.shape[0] == 1:
+            preds = final_preds[0, :, :, :]  # shape: (iterative, H, W)
+        else:
+            preds = final_preds[:, last_iter, :, :]  # shape: (samples, H, W)
+
+        var_unc = get_uncertainty_by_var(preds, axis=0, num_rows=n_rows, num_cols=n_cols)
+        std_unc = get_uncertainty_by_std(preds, axis=0, num_rows=n_rows, num_cols=n_cols)
+
+        abs_err = get_error_by_abs(pred, mask, num_rows=n_rows, num_cols=n_cols)
+        mse_err = get_error_by_mse(pred, mask, num_rows=n_rows, num_cols=n_cols)
+
+        return var_unc, std_unc, abs_err, mse_err
+
+    except Exception as e:
+        print(f"[ERROR] Exception while processing {image_name}: {e}")
+        return 0, 0, 0, 0
 
 def uncertainty_evaluation(
         data_wrapper, 
@@ -175,7 +175,9 @@ def uncertainty_evaluation(
         samples: int, 
         pred_dir: str, 
         save_path: str, 
-        num_workers: int):
+        num_workers: int, 
+        n_rows: int,
+        n_cols: int):
     
     var_uncertainties = []
     std_uncertainties = []
@@ -183,7 +185,7 @@ def uncertainty_evaluation(
     mse_errors = []
 
     num_images = len(data_wrapper.image_files)
-    args_list = [(img, iterative, samples, pred_dir) for img in data_wrapper.image_files]
+    args_list = [(img, iterative, samples, pred_dir, n_rows, n_cols) for img in data_wrapper.image_files]
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         results = list(tqdm(executor.map(uncertainty_evaluate_single_image, args_list), total=num_images))

@@ -126,7 +126,9 @@ if __name__ == "__main__":
                     samples=args.samples,
                     pred_dir=args.prediction_path,
                     save_path=args.save_path,
-                    num_workers = args.num_workers
+                    num_workers = args.num_workers,
+                    n_rows = args.n_rows,
+                    n_cols= args.n_cols, 
                 )
     elif args.eval_type == 'out-of-distribution':
         print("OOD evaluation is not yet implemented.")
