@@ -6,7 +6,7 @@ from tqdm import tqdm
 from concurrent.futures import ProcessPoolExecutor
 import pandas as pd
 
-from metric import compute_ccq, compute_ccq_normal, corr, rAULC
+from metric import compute_ccq, compute_ccq_normal, corr, rAULC, AUCMetric, PRAUCMetric
 from metric import get_uncertainty_by_var, get_uncertainty_by_std
 from metric import get_error_by_abs, get_error_by_mse, compute_ece
 
@@ -57,8 +57,18 @@ def segmentation_evaluate_single_image(args):
         if relax:
             corr, comp, qual, f1 = compute_ccq(pred, mask, threshold=0.5, slack=5)
         else:
-            corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5, slack=5)
-        return corr, comp, qual, f1
+            corr, comp, qual, f1 = compute_ccq_normal(pred, mask, threshold=0.5)
+        
+        auc_metric = AUCMetric(from_logits=False)
+        pr_auc_metric = PRAUCMetric(from_logits=False)
+
+        auc_metric.update_state(mask, pred)
+        pr_auc_metric.update_state(mask, pred)
+
+        roc_auc = auc_metric.result().numpy()
+        pr_auc = pr_auc_metric.result().numpy()
+
+        return corr, comp, qual, f1, roc_auc, pr_auc
 
     except Exception as e:
         print(f"[ERROR] Exception while processing {image_name}: {e}")
@@ -111,6 +121,8 @@ def segmentation_evaluation(
     completeness = 0
     quality = 0
     f1_score = 0
+    roc_auc_all = 0
+    pr_auc_all = 0
 
     num_images = len(data_wrapper.image_files)
     args_list = [(img, iterative, samples, pred_dir, relax) for img in data_wrapper.image_files]
@@ -118,17 +130,21 @@ def segmentation_evaluation(
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         results = list(tqdm(executor.map(segmentation_evaluate_single_image, args_list), total=num_images))
 
-    for corr, comp, qual, f1 in results:
+    for corr, comp, qual, f1, roc_auc, pr_auc in results:
         correctness += corr
         completeness += comp
         quality += qual
         f1_score += f1
+        roc_auc_all += roc_auc
+        pr_auc_all += pr_auc
 
     print("\n===> AVERAGE CCQ RESULT <===")
     print(f"Correctness:  {correctness / num_images:.4f}")
     print(f"Completeness: {completeness / num_images:.4f}")
     print(f"Quality:      {quality / num_images:.4f}")
     print(f"F1 Score:     {f1_score / num_images:.4f}")
+    print(f"ROC_AUC:     {roc_auc_all / num_images:.4f}")
+    print(f"PR_AUC:     {pr_auc_all / num_images:.4f}")
 
     save_file = os.path.join(save_path, "seg_avg_results.csv")
 
@@ -138,13 +154,17 @@ def segmentation_evaluation(
             "Correctness (Precision)",
             "Completeness (Recall)",
             "Quality (IoU)",
-            "F1 Score"
+            "F1 Score",
+            "ROC_AUC",
+            "PR_AUC"
         ])
         writer.writerow([
             round(correctness / num_images, 4),
             round(completeness / num_images, 4),
             round(quality / num_images, 4),
-            round(f1_score / num_images, 4)
+            round(f1_score / num_images, 4),
+            round(roc_auc_all / num_images, 4),
+            round(pr_auc_all / num_images),
         ])
 
     print(f"\n✅ Results saved to: {save_file}")

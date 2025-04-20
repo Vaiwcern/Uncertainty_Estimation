@@ -1,12 +1,15 @@
 import os
+os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tensorflow.keras import mixed_precision
-mixed_precision.set_global_policy("mixed_float16")
+# from tensorflow.keras import mixed_precision
+# mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 import yaml
+from tensorflow.keras import mixed_precision
+print("⚠️ Mixed precision policy:", mixed_precision.global_policy())
 
 from predict_function import predict_and_save_results
 from custom_dataset.DatasetController import DatasetController
@@ -83,6 +86,12 @@ if __name__ == "__main__":
         )
     elif args.dataset == "Mass":
         data_wrapper = DatasetController.get_massachusetts_test_wrapper(
+            dataset_path=args.dataset_path,
+            batch_size=args.batch_size,
+            add_channel=False,
+        )
+    elif args.dataset == "Drive":
+        data_wrapper = DatasetController.get_drive_test_wrapper(
             dataset_path=args.dataset_path,
             batch_size=args.batch_size,
             add_channel=False,

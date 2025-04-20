@@ -25,21 +25,17 @@ def main():
     save_dir = "debug_output"
     os.makedirs(save_dir, exist_ok=True)
 
-    # Load train & test dataset
-    # train_ds = DRIVEDatasetTF("DRIVE", train=True, batch_size=4).dataset
-    # test_ds = DRIVEDatasetTF("DRIVE", train=False, batch_size=4).dataset
-
     train_ds = DatasetController.get_drive_train_wrapper(
         dataset_path="/home/ltnghia02/MEDICAL_ITERATIVE/dataset/DRIVE",
         batch_size=4,
-        add_channel=False,
+        add_channel=True,
         buffer_size = 10
     ).dataset
 
     test_ds = DatasetController.get_drive_test_wrapper(
         dataset_path="/home/ltnghia02/MEDICAL_ITERATIVE/dataset/DRIVE",
         batch_size=4,
-        add_channel=False,
+        add_channel=True,
     ).dataset
 
     # Lấy một batch train

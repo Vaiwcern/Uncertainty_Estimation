@@ -4,12 +4,11 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import tensorflow as tf
 import keras
-# from tensorflow.keras import mixed_precision
+import time
 
 from model.unet import IterativeUnet, VanilaUnet
 from training_utils import CustomCallbacks, CustomLosses
-from evaluation.metric import IoUMetric, F1ScoreMetric
-
+from evaluation.metric import IoUMetric, F1ScoreMetric, AUCMetric, PRAUCMetric  
 
 def train(
     model: str,
@@ -32,7 +31,7 @@ def train(
 
     if loss_function == 'focal': 
         loss = CustomLosses.focal_loss()
-    elif loss_function == 'BCE': 
+    elif loss_function == 'bce': 
         loss = CustomLosses.binary_crossentropy_loss()
     elif loss_function == 'dice': 
         loss = CustomLosses.dice_loss()
@@ -40,6 +39,8 @@ def train(
         loss = CustomLosses.dice_bce_loss()
     elif loss_function == 'dice_focal': 
         loss = CustomLosses.dice_focal_loss()
+    elif loss_function == 'iou': 
+        loss = CustomLosses.iou_loss()
     else: 
         raise ValueError("Loss function not supported.")
 
@@ -50,15 +51,16 @@ def train(
             myModel = VanilaUnet(input_channels=input_channels, dropout_rate=dropout_rate, use_batchnorm=use_batchnorm)
         
         optim = keras.optimizers.Adam(learning_rate=learning_rate)
-        # optim = mixed_precision.LossScaleOptimizer(optim)
 
         myModel.compile(
             optimizer=optim,
             loss=loss,
             metrics=[
-                tf.keras.metrics.BinaryAccuracy(name='acc'),
-                IoUMetric(threshold=0.5),
-                F1ScoreMetric(threshold=0.5),
+                tf.keras.metrics.BinaryAccuracy(name='acc', threshold=0.5),
+                IoUMetric(threshold=0.5, from_logits=True),
+                F1ScoreMetric(threshold=0.5, from_logits=True),
+                AUCMetric(from_logits=True),
+                PRAUCMetric(from_logits=True),
             ]
         )
 
@@ -70,13 +72,17 @@ def train(
         elif isinstance(layer, tf.keras.layers.BatchNormalization):
             print(f"Found BN layer: {layer.name}")
 
+    start = time.time()
     myModel.fit(
         train_dataset,  
         epochs=num_epoch,
         steps_per_epoch=train_dataset_wrapper.steps_per_epoch,
-        verbose=1,
+        verbose=0,
         callbacks=[
-            # CustomCallbacks.PrintLossCallback(),
+            CustomCallbacks.PrettyPrintMetrics(),
             CustomCallbacks.SaveEveryNEpoch(save_path=save_path, interval=save_per_epoch)
         ]
     )
+    end = time.time()
+
+    print(f"⏱️ Total time training: {(end - start):.2f} giây")

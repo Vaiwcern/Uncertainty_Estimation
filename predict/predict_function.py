@@ -150,6 +150,7 @@ def build_distributed_predict_step(model, strategy, training=False, iterative=1,
 
                     tf.print("[DEBUG] Training mode:", training)
                     y_pred = model(input_images, training=training)
+                    y_pred = tf.sigmoid(y_pred)
                     # tf.print("[DEBUG] y_pred min:", tf.reduce_min(y_pred), "max:", tf.reduce_max(y_pred))
                     iter_array = iter_array.write(i, tf.cast(y_pred, tf.float32))
 

@@ -98,6 +98,12 @@ if __name__ == "__main__":
             batch_size=1,
             add_channel=False,
         )
+    elif args.dataset == "Drive":
+        data_wrapper = DatasetController.get_drive_test_wrapper(
+            dataset_path=args.dataset_path,
+            batch_size=1,
+            add_channel=False,
+        )
     else:
         raise ValueError(f"Unsupported dataset: {args.dataset}")
 

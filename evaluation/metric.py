@@ -5,13 +5,17 @@ from scipy import ndimage
 import sklearn.metrics
 
 class IoUMetric(tf.keras.metrics.Metric):
-    def __init__(self, name='iou', threshold=0.5, **kwargs):
+    def __init__(self, name='iou', threshold=0.5, from_logits=True, **kwargs):
         super().__init__(name=name, **kwargs)
         self.threshold = threshold
+        self.from_logits = from_logits
         self.intersection = self.add_weight(name='intersection', initializer='zeros')
         self.union = self.add_weight(name='union', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
+        if self.from_logits:
+            y_pred = tf.math.sigmoid(y_pred)
+
         y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
         y_true = tf.cast(y_true, tf.float32)
 
@@ -28,15 +32,20 @@ class IoUMetric(tf.keras.metrics.Metric):
         self.intersection.assign(0.0)
         self.union.assign(0.0)
 
+
 class F1ScoreMetric(tf.keras.metrics.Metric):
-    def __init__(self, name='f1', threshold=0.5, **kwargs):
+    def __init__(self, name='f1', threshold=0.5, from_logits=True, **kwargs):
         super().__init__(name=name, **kwargs)
         self.threshold = threshold
+        self.from_logits = from_logits
         self.tp = self.add_weight(name='tp', initializer='zeros')
         self.fp = self.add_weight(name='fp', initializer='zeros')
         self.fn = self.add_weight(name='fn', initializer='zeros')
 
     def update_state(self, y_true, y_pred, sample_weight=None):
+        if self.from_logits:
+            y_pred = tf.math.sigmoid(y_pred)
+
         y_pred_bin = tf.cast(y_pred > self.threshold, tf.float32)
         y_true = tf.cast(y_true, tf.float32)
 
@@ -58,6 +67,26 @@ class F1ScoreMetric(tf.keras.metrics.Metric):
         self.tp.assign(0.0)
         self.fp.assign(0.0)
         self.fn.assign(0.0)
+
+class AUCMetric(tf.keras.metrics.AUC):
+    def __init__(self, from_logits=True, name='roc_auc', **kwargs):
+        super().__init__(name=name, from_logits=from_logits, **kwargs)
+        self._from_logits = from_logits
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        if self._from_logits:
+            y_pred = tf.math.sigmoid(y_pred)
+        return super().update_state(y_true, y_pred, sample_weight)
+
+class PRAUCMetric(tf.keras.metrics.AUC):
+    def __init__(self, from_logits=True, name='pr_auc', **kwargs):
+        super().__init__(name=name, curve='PR', from_logits=from_logits, **kwargs)
+        self._from_logits = from_logits
+
+    def update_state(self, y_true, y_pred, sample_weight=None):
+        if self._from_logits:
+            y_pred = tf.math.sigmoid(y_pred)
+        return super().update_state(y_true, y_pred, sample_weight)
 
 
 def min_max_normalize(array: np.ndarray) -> np.ndarray:

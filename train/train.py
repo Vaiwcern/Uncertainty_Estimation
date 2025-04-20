@@ -1,9 +1,8 @@
 import os
+os.environ["TF_ENABLE_LAYOUT_OPTIMIZER"] = "0"
 import sys
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-# from tensorflow.keras import mixed_precision
-# mixed_precision.set_global_policy("mixed_float16")
 import argparse
 from datetime import datetime
 import yaml
@@ -51,7 +50,7 @@ def parse_args():
         help="Save model weights every N epochs. Default: 5.")
 
     parser.add_argument('--loss_function', type=str, required=True, default='focal',
-        help="Loss function to use during training. Options: 'focal', or 'iou'. "
+        help="Loss function to use during training. Options: 'focal', 'iou', 'bce', 'dice', 'dice_bce', 'dice_focal'. "
          "Default: 'focal'.")
 
     parser.add_argument('--buffer_size', type=int, required=False, default=None,
