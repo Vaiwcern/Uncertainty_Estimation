@@ -13,7 +13,7 @@ import warnings
 
 from model.unet import IterativeUnet, VanilaUnet
 
-def load_yaml_config(path): 
+def load_yaml_config(path):     
     if not os.path.exists(path):
         raise FileNotFoundError(f"Setting file not found at: {path}")
 
@@ -130,17 +130,11 @@ def build_distributed_predict_step(model, strategy, training=False, iterative=1,
     @tf.function(reduce_retracing=True)
     def distributed_predict_step(images):
         def step_fn(images):
-            # batch_size = tf.shape(images)[0]
-            # tf.print("🔥 Replica shape:", tf.shape(images), "Batch size:", batch_size)
-            # images = tf.identity(images)  # để giữ node
-
-            # images = tf.cast(images, tf.float16)  # Mixed precision
             result_array = tf.TensorArray(dtype=tf.float32, size=samples)
 
             for s in tf.range(samples):
                 iter_array = tf.TensorArray(dtype=tf.float32, size=iterative)
                 zero_channel = tf.zeros_like(images[..., :1], dtype=tf.float32)
-                # zero_channel = tf.cast(zero_channel, tf.float16)
 
                 for i in tf.range(iterative):
                     if iterative > 1:
@@ -148,15 +142,12 @@ def build_distributed_predict_step(model, strategy, training=False, iterative=1,
                     else:
                         input_images = images
 
-                    tf.print("[DEBUG] Training mode:", training)
                     y_pred = model(input_images, training=training)
                     y_pred = tf.sigmoid(y_pred)
-                    # tf.print("[DEBUG] y_pred min:", tf.reduce_min(y_pred), "max:", tf.reduce_max(y_pred))
                     iter_array = iter_array.write(i, tf.cast(y_pred, tf.float32))
 
                     if iterative > 1:
                         zero_channel = y_pred
-                        # zero_channel = tf.cast(zero_channel, tf.float16)
 
                 iter_stack = tf.transpose(iter_array.stack(), [1, 0, 2, 3, 4])
                 result_array = result_array.write(s, iter_stack)
@@ -185,15 +176,10 @@ def predict(data_wrapper, strategy, distributed_predict_step):
             break
 
         images, masks, filenames = batch
-        # for i, t in enumerate(strategy.experimental_local_results(images)):
-        #     tf.print(f"[DEBUG] images shape on GPU {i}:", tf.shape(t))
 
         per_replica_preds = distributed_predict_step(images)\
             
         local_results = strategy.experimental_local_results(per_replica_preds)
-        # print(f"Local results count: {len(local_results)}")
-        # for i, tensor in enumerate(local_results):
-            # print(f"[GPU {i}] pred shape: {tensor.shape}")
         gathered_preds = tf.concat(local_results, axis=0).numpy()
 
         masks_np = tf.concat(strategy.experimental_local_results(masks), axis=0).numpy()
@@ -204,8 +190,6 @@ def predict(data_wrapper, strategy, distributed_predict_step):
         all_masks.extend(masks_np)
         all_filenames.extend(filenames_np)
 
-        # print(f"[DEBUG] preds: {gathered_preds.shape}, masks: {masks_np.shape}, filenames: {len(filenames_np)}")
-
     return all_preds, all_filenames, all_masks
 
 def predict_and_save_results(
@@ -215,7 +199,7 @@ def predict_and_save_results(
     save_path: str,
     training: bool,
     iterative: int,
-    samples: int
+    samples: int, 
 ) -> None:
     # === Logging thông tin ===
     print("🚀 Starting distributed prediction")
@@ -241,7 +225,7 @@ def predict_and_save_results(
         strategy=strategy,
         training=training,
         iterative=iterative,
-        samples=samples
+        samples=samples, 
     )
 
     # === Run prediction ===

@@ -56,6 +56,9 @@ def parse_args():
 
     parser.add_argument('--num_workers', type=int, required=False,
             help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
+
+    parser.add_argument('--ensembles', type=int, required=False, default=0,
+            help="Comma-separated list of GPU device IDs to use. Example: '0,1'.")
     
     return parser.parse_args()
 
@@ -116,7 +119,8 @@ if __name__ == "__main__":
             pred_dir=args.prediction_path,
             relax=args.relaxed_ccq,
             save_path=args.save_path,
-            num_workers = args.num_workers
+            num_workers = args.num_workers, 
+            ensembles=args.ensembles
         )
 
     elif args.eval_type == 'uncertainty':
@@ -129,6 +133,7 @@ if __name__ == "__main__":
                     num_workers = args.num_workers,
                     n_rows = args.n_rows,
                     n_cols= args.n_cols, 
+                    ensembles=args.ensembles
                 )
     elif args.eval_type == 'out-of-distribution':
         print("OOD evaluation is not yet implemented.")

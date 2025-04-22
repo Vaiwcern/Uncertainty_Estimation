@@ -106,7 +106,7 @@ class RTDatasetTF:
 
 
 class MassachusettsDatasetTF:
-    def __init__(self, dataset_dir, batch_size=8, normalize=True, split='train', add_channel=True, buffer_size = None):
+    def __init__(self, dataset_dir, batch_size=8, normalize=True, split='train', add_channel=True, buffer_size=None):
         self.dataset_dir = Path(dataset_dir)
         self.batch_size = batch_size
         self.normalize = normalize
@@ -114,31 +114,34 @@ class MassachusettsDatasetTF:
         self.shuffle_data = (split == 'train')
         self.add_channel = add_channel
 
-        df = pd.read_csv(self.dataset_dir / "metadata.csv", sep=',', header=0)
-        print(df.columns.tolist())
+        df = pd.read_csv(self.dataset_dir / "metadata.csv")
         df = df[df['split'] == split]
 
-        print("📂 Looking for images in:", self.image_dir.resolve())
-        print("🔎 Pattern: *.png")
-        self.image_files = [self.dataset_dir / p for p in df['tiff_image_path'].tolist()]
-        print("📸 Found:", len(self.image_files), "images")
+        self.image_files = [self.dataset_dir / p for p in df['tiff_image_path']]
+        self.mask_files = [self.dataset_dir / p for p in df['tif_label_path']]
+        self.filenames = [Path(p).name for p in df['tiff_image_path']]
 
-        if buffer_size:
+        if buffer_size is not None:
             self.buffer_size = buffer_size
-        else: 
+        else:
             self.buffer_size = len(self.image_files)
-            
-        self.mask_files = [self.dataset_dir / p for p in df['tif_label_path'].tolist()]
 
         if self.shuffle_data:
-            self.image_files, self.mask_files = shuffle(self.image_files, self.mask_files)
+            self.image_files, self.mask_files, self.filenames = shuffle(
+                self.image_files, self.mask_files, self.filenames
+            )
+
+        # 📌 Log information
+        print("📂 Looking for images in:", self.dataset_dir.resolve())
+        print("📄 Using metadata.csv split:", split)
+        print("📸 Found:", len(self.image_files), "images")
 
         self.steps_per_epoch = len(self.image_files) // self.batch_size
         self.dataset = self.build_dataset()
 
     def load_pair(self, image_path, mask_path):
-        image = imageio.imread(image_path.decode('utf-8'))
-        mask = imageio.imread(mask_path.decode('utf-8'))
+        image = imageio.imread(image_path.decode("utf-8"))
+        mask = imageio.imread(mask_path.decode("utf-8"))
         mask = (mask >= 128).astype(np.float32)
         mask = np.expand_dims(mask, axis=-1)
 
@@ -164,39 +167,40 @@ class MassachusettsDatasetTF:
             mask = np.expand_dims(mask, axis=-1)
         return image.astype(np.float32), mask.astype(np.float32)
 
-    def tf_load_pair(self, image_path, mask_path):
+    def tf_load_pair(self, image_path, mask_path, filename):
         image, mask = tf.numpy_function(self.load_pair, [image_path, mask_path], [tf.float32, tf.float32])
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
-        return image, mask
+        return image, mask, filename
 
     def tf_augment_pair(self, image, mask):
         image, mask = tf.numpy_function(self.augment_pair_np, [image, mask], [tf.float32, tf.float32])
         image.set_shape([None, None, 3])
         mask.set_shape([None, None, 1])
-
         if self.add_channel:
-            zero_channel = tf.zeros_like(image[..., :1])  # (H, W, 1)
-            image = tf.concat([image, zero_channel], axis=-1)  # (H, W, 4)
+            zero_channel = tf.zeros_like(image[..., :1])
+            image = tf.concat([image, zero_channel], axis=-1)
             image.set_shape([None, None, 4])
-
         return image, mask
 
     def build_dataset(self):
         img_paths = [str(p) for p in self.image_files]
         mask_paths = [str(p) for p in self.mask_files]
+        filenames = self.filenames
 
-        dataset = tf.data.Dataset.from_tensor_slices((img_paths, mask_paths))
-        dataset = dataset.map(self.tf_load_pair, num_parallel_calls=tf.data.AUTOTUNE)
+        dataset = tf.data.Dataset.from_tensor_slices((img_paths, mask_paths, filenames))
 
-        if self.augment:
+        if not self.augment:
+            dataset = dataset.map(self.tf_load_pair, num_parallel_calls=tf.data.AUTOTUNE)
+            dataset = dataset.batch(self.batch_size).prefetch(tf.data.AUTOTUNE)
+        else:
+            dataset = dataset.map(lambda x, y, z: self.tf_load_pair(x, y, z)[0:2], num_parallel_calls=tf.data.AUTOTUNE)
             dataset = dataset.map(self.tf_augment_pair, num_parallel_calls=tf.data.AUTOTUNE)
-
-        if self.shuffle_data:
             dataset = dataset.shuffle(buffer_size=self.buffer_size, reshuffle_each_iteration=True)
+            dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
 
-        dataset = dataset.batch(self.batch_size).repeat().prefetch(tf.data.AUTOTUNE)
         return dataset
+
 
 class DRIVEDatasetTF:
     def __init__(self, dataset_dir, add_channel=True, batch_size=8, normalize=True, train=True, buffer_size=None):

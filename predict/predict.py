@@ -104,5 +104,5 @@ if __name__ == "__main__":
         save_path=args.save_path,
         training=args.training_mode,
         iterative=args.iterative,
-        samples=args.samples
+        samples=args.samples,
     )

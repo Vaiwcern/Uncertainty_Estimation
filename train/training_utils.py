@@ -26,24 +26,27 @@ class CustomCallbacks:
                 print(f"\n📦 Saved model to: {filename}")
 
     class PrettyPrintMetrics(tf.keras.callbacks.Callback):
+        def on_train_begin(self, logs=None):
+            self.epoch_start_time = time.time()
+            self.total_steps = self.params['steps']
+
         def on_epoch_begin(self, epoch, logs=None):
             self.epoch_start_time = time.time()
+            self.current_step = 0
+            print(f"\n📊 Epoch {epoch + 1}/{self.params['epochs']}")
+
+        def on_train_batch_end(self, batch, logs=None):
+            logs = logs or {}
+            self.current_step += 1
+            metrics_str = ", ".join([f"{k}: {v:.4f}" for k, v in logs.items()])
+
+            progress = f" Step {self.current_step}/{self.total_steps}"
+            print(f"\r🔁{progress} | {metrics_str}", end='', flush=True)
+
 
         def on_epoch_end(self, epoch, logs=None):
             duration = time.time() - self.epoch_start_time
-            logs = logs or {}
-
-            metrics_str = ", ".join([f"{k}: {v:.4f}" for k, v in logs.items()])
-
-            print(f"\n📊 Epoch {epoch + 1} - ⏱️ {duration:.2f}s")
-            print(f"   {metrics_str}")
-            sys.stdout.flush()
-
-
-# def convert_model_to_functional(model, input_shape=(1024, 1024, 4)):
-#     inputs = keras.Input(shape=input_shape)
-#     outputs = model(inputs)
-#     return keras.Model(inputs=inputs, outputs=outputs)
+            print(f"\n✅ Epoch {epoch + 1} completed in {duration:.2f}s\n")
 
 class CustomLosses: 
     @staticmethod

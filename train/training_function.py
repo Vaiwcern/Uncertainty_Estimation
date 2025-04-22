@@ -10,6 +10,8 @@ from model.unet import IterativeUnet, VanilaUnet
 from training_utils import CustomCallbacks, CustomLosses
 from evaluation.metric import IoUMetric, F1ScoreMetric, AUCMetric, PRAUCMetric  
 
+from focal_loss import BinaryFocalLoss
+
 def train(
     model: str,
     train_dataset_wrapper: tf.data.Dataset,
@@ -30,7 +32,7 @@ def train(
     print('Number of devices: {}'.format(strategy.num_replicas_in_sync))
 
     if loss_function == 'focal': 
-        loss = CustomLosses.focal_loss()
+        loss = BinaryFocalLoss(gamma=2.0, from_logits=True),
     elif loss_function == 'bce': 
         loss = CustomLosses.binary_crossentropy_loss()
     elif loss_function == 'dice': 

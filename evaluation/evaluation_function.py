@@ -12,9 +12,13 @@ from metric import get_error_by_abs, get_error_by_mse, compute_ece
 
 from plot import plot_corr_rAULC
 
-def get_pred_n_mask(base_name, pred_dir, iterative, samples): 
+def get_pred_n_mask(base_name, pred_dir, iterative, samples, ensembles): 
     # --- Load mask ---
-    mask_path = os.path.join(pred_dir, f"{base_name}_mask.png")
+    if ensembles > 0: 
+        pred_dir_path = os.path.join(pred_dir, "model_0")
+    else: 
+        pred_dir_path = pred_dir
+    mask_path = os.path.join(pred_dir_path, f"{base_name}_mask.png")
     mask = imageio.imread(mask_path)
     if mask is None:
         print(f"[ERROR] Cannot read mask: {mask_path}")
@@ -22,32 +26,53 @@ def get_pred_n_mask(base_name, pred_dir, iterative, samples):
 
     mask = (mask >= 128).astype(np.uint8)
 
-    # --- Load all predictions: all iterations for each sample ---
-    final_preds = []  # shape: [samples, iterative, H, W]
-    for s in range(samples):
-        sample_preds = []
-        for it in range(iterative):
-            pred_filename = f"{base_name}_sample_{s}_iter{it}.png"
-            pred_path = os.path.join(pred_dir, pred_filename)
+    if ensembles > 0: 
+        final_preds = []  # shape: [ensembles, iterative, H, W]
+        for s in range(ensembles): 
+            pred_dir_model = os.path.join(pred_dir, f"model_{s}")
+            sample_preds = []
+            for it in range(iterative):
+                pred_filename = f"{base_name}_sample_0_iter{it}.png"
+                pred_path = os.path.join(pred_dir_model, pred_filename)
 
-            if not os.path.exists(pred_path):
-                print(f"[ERROR] Missing prediction: {pred_path}")
-                return 0, 0
+                if not os.path.exists(pred_path):
+                    print(f"[ERROR] Missing prediction: {pred_path}")
+                    return 0, 0
 
-            pred_img = imageio.imread(pred_path).astype(np.float32) / 255.0
-            sample_preds.append(pred_img)
+                pred_img = imageio.imread(pred_path).astype(np.float32) / 255.0
+                sample_preds.append(pred_img)
 
-        final_preds.append(sample_preds)
+            final_preds.append(sample_preds)
 
-    final_preds = np.array(final_preds, dtype=np.float32)  # shape: [samples, iterative, H, W]
+        final_preds = np.array(final_preds, dtype=np.float32)
+
+    else: 
+        # --- Load all predictions: all iterations for each sample ---
+        final_preds = []  # shape: [samples, iterative, H, W]
+        for s in range(samples):
+            sample_preds = []
+            for it in range(iterative):
+                pred_filename = f"{base_name}_sample_{s}_iter{it}.png"
+                pred_path = os.path.join(pred_dir, pred_filename)
+
+                if not os.path.exists(pred_path):
+                    print(f"[ERROR] Missing prediction: {pred_path}")
+                    return 0, 0
+
+                pred_img = imageio.imread(pred_path).astype(np.float32) / 255.0
+                sample_preds.append(pred_img)
+
+            final_preds.append(sample_preds)
+
+        final_preds = np.array(final_preds, dtype=np.float32)  # shape: [samples, iterative, H, W]
     return final_preds, mask
 
 
 def segmentation_evaluate_single_image(args):
-    image_name, iterative, samples, pred_dir, relax = args
+    image_name, iterative, samples, pred_dir, relax, ensembles = args
     try:
         base_name = os.path.splitext(os.path.basename(image_name))[0]
-        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
+        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples, ensembles)
 
         # --- Average samples at the last iteration ---
         last_iter = iterative - 1
@@ -81,7 +106,8 @@ def segmentation_evaluation(
         pred_dir: str, 
         relax: bool, 
         save_path: str, 
-        num_workers: int):
+        num_workers: int, 
+        ensembles: int):
     
     correctness = 0
     completeness = 0
@@ -91,7 +117,7 @@ def segmentation_evaluation(
     pr_auc_all = 0
 
     num_images = len(data_wrapper.image_files)
-    args_list = [(img, iterative, samples, pred_dir, relax) for img in data_wrapper.image_files]
+    args_list = [(img, iterative, samples, pred_dir, relax, ensembles) for img in data_wrapper.image_files]
 
     with ThreadPoolExecutor(max_workers=num_workers) as executor:
         results = list(tqdm(executor.map(segmentation_evaluate_single_image, args_list), total=num_images))
@@ -137,10 +163,10 @@ def segmentation_evaluation(
 
 
 def uncertainty_evaluate_single_image(args):
-    image_name, iterative, samples, pred_dir, n_rows, n_cols= args
+    image_name, iterative, samples, pred_dir, n_rows, n_cols, ensembles = args
     try:
         base_name = os.path.splitext(os.path.basename(image_name))[0]
-        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples)
+        final_preds, mask = get_pred_n_mask(base_name, pred_dir, iterative, samples, ensembles)
 
         # --- Warning if samples duplicate
         for i in range(samples):
@@ -177,7 +203,8 @@ def uncertainty_evaluation(
         save_path: str, 
         num_workers: int, 
         n_rows: int,
-        n_cols: int):
+        n_cols: int, 
+        ensembles: int):
     
     var_uncertainties = []
     std_uncertainties = []
@@ -185,7 +212,7 @@ def uncertainty_evaluation(
     mse_errors = []
 
     num_images = len(data_wrapper.image_files)
-    args_list = [(img, iterative, samples, pred_dir, n_rows, n_cols) for img in data_wrapper.image_files]
+    args_list = [(img, iterative, samples, pred_dir, n_rows, n_cols, ensembles) for img in data_wrapper.image_files]
 
     with ProcessPoolExecutor(max_workers=num_workers) as executor:
         results = list(tqdm(executor.map(uncertainty_evaluate_single_image, args_list), total=num_images))

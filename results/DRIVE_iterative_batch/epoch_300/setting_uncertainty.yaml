@@ -3,12 +3,13 @@ dataset_path: /home/ltnghia02/MEDICAL_ITERATIVE/dataset/DRIVE
 save_path: /home/ltnghia02/MEDICAL_ITERATIVE/source/results/DRIVE_iterative_batch/epoch_300
 prediction_path: /home/ltnghia02/MEDICAL_ITERATIVE/predictions/DRIVE_iterative_batch/epoch_300
 iterative: 3
-samples: 1
+samples: 5
 eval_type: uncertainty
 ood_dataset: null
 ood_dataset_path: null
 relaxed_ccq: false
 n_rows: 2
 n_cols: 2
-gpus: '0'
+gpus: '2'
 num_workers: 4
+ensembles: 0
