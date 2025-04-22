@@ -3,7 +3,7 @@ dataset_path: /home/ltnghia02/MEDICAL_ITERATIVE/dataset/DRIVE
 save_path: /home/ltnghia02/MEDICAL_ITERATIVE/source/results/DRIVE_iterative_dropout_batch/epoch_300
 prediction_path: /home/ltnghia02/MEDICAL_ITERATIVE/predictions/DRIVE_iterative_dropout_batch/epoch_300
 iterative: 3
-samples: 5
+samples: 1
 eval_type: uncertainty
 ood_dataset: null
 ood_dataset_path: null

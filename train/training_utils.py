@@ -3,6 +3,7 @@ import os
 import keras
 import keras.backend as K
 import time
+import sys 
 
 class CustomCallbacks:
     class PrintLossCallback(tf.keras.callbacks.Callback):
@@ -36,6 +37,8 @@ class CustomCallbacks:
 
             print(f"\n📊 Epoch {epoch + 1} - ⏱️ {duration:.2f}s")
             print(f"   {metrics_str}")
+            sys.stdout.flush()
+
 
 # def convert_model_to_functional(model, input_shape=(1024, 1024, 4)):
 #     inputs = keras.Input(shape=input_shape)
