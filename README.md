@@ -48,24 +48,46 @@ Models are dynamically selected via CLI and fully support:
 
 ---
 
-## 🚀 Getting Started
+## ⚙️ Environment Setup
 
-### 1. 🏋️ Train a Model
+To set up your development environment for this project, follow the steps below:
+
+### 📥 1. Clone the Repository
 
 ```bash
-python train.py \
-  --model iterative \
-  --dataset RT \
-  --dataset_path /path/to/roadtracer \
-  --dropout_rate 0.3 \
-  --use_batchnorm \
-  --image_channel 3 \
-  --add_channel \
-  --batch_size 8 \
-  --learning_rate 0.001 \
-  --num_epoch 100 \
-  --save_path ./checkpoints/iterative_rt \
-  --loss_function dice_focal \
-  --save_per_epoch 10 \
-  --buffer_size 1000 \
-  --gpus 0
+git clone https://github.com/your-username/your-repo-name.git
+cd your-repo-name
+```
+
+### 🐍 2. Create a Virtual Environment
+
+It is recommended to use Python 3.8+.
+
+```bash
+python -m venv venv
+```
+
+### ▶️ 3. Activate the Virtual Environment
+
+- On **Linux/macOS**:
+
+```bash
+source venv/bin/activate
+```
+
+- On **Windows**:
+
+```bash
+venv\Scripts\activate.bat
+```
+
+### 📦 4. Install Dependencies
+
+Install all required packages using `requirements.txt`:
+
+```bash
+pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+> ✅ Tip: Using a virtual environment helps avoid dependency conflicts with other projects.
